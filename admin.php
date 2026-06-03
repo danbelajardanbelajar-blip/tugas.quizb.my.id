@@ -9,28 +9,37 @@ if (!isset($_SESSION['status']) || $_SESSION['role'] != 'admin') {
 
 // Logika Import CSV (Urutan: NIM; Password; Nama; Kelas)
 if (isset($_POST['import'])) {
-    $file = $_FILES['file_csv']['tmp_name'];
-    $handle = fopen($file, "r");
-    $firstLine = fgets($handle);
-    $separator = (strpos($firstLine, ';') !== false) ? ";" : ",";
-    rewind($handle);
-    fgetcsv($handle, 1000, $separator);
+    if (!isset($_FILES['file_csv']) || !is_uploaded_file($_FILES['file_csv']['tmp_name'])) {
+        $msg_import = "File CSV tidak ditemukan atau belum diunggah.";
+    } else {
+        $file = $_FILES['file_csv']['tmp_name'];
+        $handle = fopen($file, "r");
 
-    $success = 0;
-    while (($data = fgetcsv($handle, 1000, $separator)) !== FALSE) {
-        if (empty($data[0])) continue;
-        $username = mysqli_real_escape_string($conn, trim($data[0])); 
-        $password = mysqli_real_escape_string($conn, trim($data[1])); 
-        $nama     = mysqli_real_escape_string($conn, trim($data[2])); 
-        $kelas    = mysqli_real_escape_string($conn, isset($data[3]) ? trim($data[3]) : ''); 
-        
-        $query = "INSERT INTO user (username, password, nama_lengkap, kelas, role) 
-                  VALUES ('$username', '$password', '$nama', '$kelas', 'user')
-                  ON DUPLICATE KEY UPDATE password = '$password', nama_lengkap = '$nama', kelas = '$kelas'";
-        if(mysqli_query($conn, $query)) { $success++; }
+        if ($handle !== false) {
+            $firstLine = fgets($handle);
+            $separator = (strpos($firstLine, ';') !== false) ? ";" : ",";
+            rewind($handle);
+            fgetcsv($handle, 1000, $separator);
+
+            $success = 0;
+            while (($data = fgetcsv($handle, 1000, $separator)) !== FALSE) {
+                if (empty($data[0])) continue;
+                $username = mysqli_real_escape_string($conn, trim($data[0])); 
+                $password = mysqli_real_escape_string($conn, trim($data[1])); 
+                $nama     = mysqli_real_escape_string($conn, trim($data[2])); 
+                $kelas    = mysqli_real_escape_string($conn, isset($data[3]) ? trim($data[3]) : ''); 
+                
+                $query = "INSERT INTO user (username, password, nama_lengkap, kelas, role) 
+                          VALUES ('$username', '$password', '$nama', '$kelas', 'user')
+                          ON DUPLICATE KEY UPDATE password = '$password', nama_lengkap = '$nama', kelas = '$kelas'";
+                if(mysqli_query($conn, $query)) { $success++; }
+            }
+            fclose($handle);
+            $msg_import = "Berhasil mengimpor $success data mahasiswa.";
+        } else {
+            $msg_import = "Tidak dapat membuka file CSV.";
+        }
     }
-    fclose($handle);
-    $msg_import = "Berhasil mengimpor $success data mahasiswa.";
 }
 
 // Ambil nilai filter
@@ -68,8 +77,9 @@ $filter_kelas = isset($_GET['filter_kelas']) ? mysqli_real_escape_string($conn, 
                         <?php
                         $q_kelas = mysqli_query($conn, "SELECT DISTINCT kelas FROM user WHERE role='user' AND kelas IS NOT NULL AND kelas != ''");
                         while($k = mysqli_fetch_assoc($q_kelas)) {
+                            $kelasOption = htmlspecialchars($k['kelas'], ENT_QUOTES, 'UTF-8');
                             $sel = ($filter_kelas == $k['kelas']) ? 'selected' : '';
-                            echo "<option value='{$k['kelas']}' $sel>{$k['kelas']}</option>";
+                            echo "<option value='$kelasOption' $sel>$kelasOption</option>";
                         }
                         ?>
                     </select>
@@ -81,11 +91,13 @@ $filter_kelas = isset($_GET['filter_kelas']) ? mysqli_real_escape_string($conn, 
                         <?php
                         $kelompok_res = mysqli_query($conn, "SELECT DISTINCT kelompok FROM tema_masalah");
                         while($k = mysqli_fetch_assoc($kelompok_res)) {
-                            echo '<optgroup label="'.$k['kelompok'].'">';
-                            $tema_res = mysqli_query($conn, "SELECT nama_tema FROM tema_masalah WHERE kelompok='".$k['kelompok']."'");
+                            $kelompokLabel = htmlspecialchars($k['kelompok'], ENT_QUOTES, 'UTF-8');
+                            echo '<optgroup label="'.$kelompokLabel.'">';
+                            $tema_res = mysqli_query($conn, "SELECT nama_tema FROM tema_masalah WHERE kelompok='".mysqli_real_escape_string($conn, $k['kelompok'])."'");
                             while($t = mysqli_fetch_assoc($tema_res)) {
                                 $selected = ($filter_tema == $t['nama_tema']) ? 'selected' : '';
-                                echo '<option value="'.$t['nama_tema'].'" '.$selected.'>'.$t['nama_tema'].'</option>';
+                                $temaOption = htmlspecialchars($t['nama_tema'], ENT_QUOTES, 'UTF-8');
+                                echo '<option value="'.$temaOption.'" '.$selected.'>'.$temaOption.'</option>';
                             }
                             echo '</optgroup>';
                         }

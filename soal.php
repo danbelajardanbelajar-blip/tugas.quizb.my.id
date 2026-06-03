@@ -7,18 +7,10 @@ if (!isset($_SESSION['status']) || $_SESSION['status'] != "login") {
     exit();
 }
 
-// Konfigurasi Database
-$host = 'localhost';
-$user = 'quic1934_zenhkm';
-$pass = '03Maret1990';
-$db   = 'quic1934_tugas';
+include 'koneksi.php';
 
-// Membuat koneksi
-$conn = new mysqli($host, $user, $pass, $db);
-
-// Cek koneksi
-if ($conn->connect_error) {
-    die("Koneksi Database Gagal: " . $conn->connect_error);
+if (!$conn) {
+    die("Koneksi Database Gagal: " . mysqli_connect_error());
 }
 
 // Ambil nama dari session

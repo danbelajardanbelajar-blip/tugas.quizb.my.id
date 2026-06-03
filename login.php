@@ -3,30 +3,32 @@ session_start();
 include 'koneksi.php';
 
 if (isset($_POST['login'])) {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    // Pastikan query mengambil kolom role (atau rule)
-    $query = mysqli_query($conn, "SELECT * FROM user WHERE username='$username' AND password='$password'");
-    
-    if (mysqli_num_rows($query) > 0) {
-        $data = mysqli_fetch_assoc($query);
-        
-        // Set session
+    $stmt = mysqli_prepare($conn, "SELECT username, role FROM user WHERE username = ? AND password = ?");
+    mysqli_stmt_bind_param($stmt, 'ss', $username, $password);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($result && mysqli_num_rows($result) > 0) {
+        $data = mysqli_fetch_assoc($result);
+        session_regenerate_id(true);
+
         $_SESSION['status']   = "login";
         $_SESSION['username'] = $data['username'];
-        $_SESSION['role']     = $data['role']; // Simpan role di session
+        $_SESSION['role']     = $data['role'];
 
-        // Logika Pengalihan Berdasarkan Role
         if ($data['role'] == 'admin') {
             header("location:admin.php");
         } else {
             header("location:index.php");
         }
-        exit(); // Penting untuk menghentikan eksekusi script setelah redirect
+        exit();
     } else {
         $error = "Username atau Password salah!";
     }
+    mysqli_stmt_close($stmt);
 }
 ?>
 

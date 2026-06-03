@@ -45,9 +45,16 @@ if (isset($_POST['submit'])) {
     $tmp_name = $_FILES['file_upload']['tmp_name'];
     $folder   = "uploads/";
 
+    $tmp_name = $_FILES['file_upload']['tmp_name'];
+    $folder   = "uploads/";
+    $allowed_ext = ['pdf','doc','docx','ppt','pptx','xlsx','xls','txt'];
+    $extension = strtolower(pathinfo($clean_name, PATHINFO_EXTENSION));
+
     if (!is_dir($folder)) { mkdir($folder, 0777, true); }
 
-    if (move_uploaded_file($tmp_name, $folder . $filename)) {
+    if (!in_array($extension, $allowed_ext, true)) {
+        $msg = "<div class='alert alert-danger'>Jenis file tidak diizinkan. Unggah PDF, Word, Excel, atau teks.</div>";
+    } elseif (move_uploaded_file($tmp_name, $folder . $filename)) {
         $safe_filename = mysqli_real_escape_string($conn, $filename);
         
         // Simpan tugas dengan menyertakan kolom kelas otomatis
@@ -84,7 +91,7 @@ if (isset($_POST['submit'])) {
     <div class="container">
         <a class="navbar-brand" href="#">Dashboard Tugas</a>
         <div class="navbar-nav ms-auto">
-            <span class="text-white me-3">Halo, <b><?php echo $_SESSION['username']; ?></b> (Kelas <?php echo $kelas_mhs; ?>)</span>
+            <span class="text-white me-3">Halo, <b><?php echo htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8'); ?></b> (Kelas <?php echo htmlspecialchars($kelas_mhs ?: '-', ENT_QUOTES, 'UTF-8'); ?>)</span>
             <a href="logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
         </div>
     </div>
@@ -177,11 +184,11 @@ if (isset($_POST['submit'])) {
                                     while ($r = mysqli_fetch_assoc($query_tampil)) {
                                         echo "<tr class='small'>";
                                         echo "<td class='text-center'>$no</td>";
-                                        echo "<td>{$r['tema_masalah']}</td>";
-                                        echo "<td class='text-center'><span class='badge bg-info text-dark'>{$r['type_tugas']}</span></td>";
+                                        echo "<td>" . htmlspecialchars($r['tema_masalah'], ENT_QUOTES, 'UTF-8') . "</td>";
+                                        echo "<td class='text-center'><span class='badge bg-info text-dark'>" . htmlspecialchars($r['type_tugas'], ENT_QUOTES, 'UTF-8') . "</span></td>";
                                         echo "<td class='text-center'>";
-                                        echo "<a href='uploads/{$r['file_upload']}' class='btn btn-xs btn-primary py-0 me-1' style='font-size: 10px;' target='_blank'>Lihat</a> ";
-                                        echo "<a href='?hapus={$r['id_tugas']}' class='btn btn-xs btn-danger py-0' style='font-size: 10px;' onclick='return confirm(\"Hapus tugas ini?\")'>Hapus</a>";
+                                        echo "<a href='uploads/" . rawurlencode($r['file_upload']) . "' class='btn btn-xs btn-primary py-0 me-1' style='font-size: 10px;' target='_blank'>Lihat</a> ";
+                                        echo "<a href='?hapus=" . htmlspecialchars($r['id_tugas'], ENT_QUOTES, 'UTF-8') . "' class='btn btn-xs btn-danger py-0' style='font-size: 10px;' onclick='return confirm(\"Hapus tugas ini?\")'>Hapus</a>";
                                         echo "</td>";
                                         echo "</tr>";
                                         $no++;
