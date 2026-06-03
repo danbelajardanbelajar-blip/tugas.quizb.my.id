@@ -29,10 +29,12 @@ if ($checkTemaId && $checkTemaId->num_rows > 0) {
 
 // Muat semua tema dari tabel tema_masalah
 $temaList = [];
+$temaMap = [];
 $temaRes = $conn->query("SELECT id_tema, kelas, kelompok, nama_tema FROM tema_masalah ORDER BY kelas ASC, kelompok ASC, nama_tema ASC");
 if ($temaRes) {
     while ($temaRow = $temaRes->fetch_assoc()) {
         $temaList[] = $temaRow;
+        $temaMap[$temaRow['id_tema']] = $temaRow['kelas'] . ' | ' . $temaRow['kelompok'] . ' | ' . $temaRow['nama_tema'];
     }
 }
 
@@ -247,23 +249,16 @@ if (isset($_POST['update_soal'])) {
                         $query_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
                         while ($s = $query_soal->fetch_assoc()) {
                             $selectedTemaId = $temaIdExists ? ($s['tema_id'] ?? '') : '';
+                            $selectedTemaLabel = ($temaIdExists && $selectedTemaId && isset($temaMap[$selectedTemaId])) ? htmlspecialchars($temaMap[$selectedTemaId], ENT_QUOTES, 'UTF-8') : 'Tema belum terhubung';
                         ?>
                             <div class="mb-3 d-flex gap-2 align-items-start">
                                 <div class="flex-grow-1">
                                     <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
-                                    <?php if ($temaIdExists && count($temaList) > 0) : ?>
-                                        <select name="tema_id_<?= $s['id']; ?>" class="form-select mb-2" required>
-                                            <option value="">-- Pilih Tema Soal --</option>
-                                            <?php foreach ($temaList as $temaOption) : ?>
-                                                <option value="<?= $temaOption['id_tema']; ?>" <?= $temaOption['id_tema'] == $selectedTemaId ? 'selected' : ''; ?>>
-                                                    <?= htmlspecialchars($temaOption['kelas'] . ' | ' . $temaOption['kelompok'] . ' | ' . $temaOption['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($temaIdExists) : ?>
-                                        <div class="alert alert-warning p-2">Tidak ada tema tersedia. Tambahkan tema terlebih dahulu.</div>
-                                    <?php else : ?>
-                                        <div class="alert alert-info p-2">Jalankan script SQL untuk menambahkan kolom tema_id pada tb_daftar_soal agar pertanyaan dapat dikaitkan dengan tema.</div>
+                                    <?php if ($temaIdExists) : ?>
+                                        <div class="mb-2">
+                                            <span class="badge bg-info text-dark">Tema: <?= $selectedTemaLabel; ?></span>
+                                        </div>
+                                        <input type="hidden" name="tema_id_<?= $s['id']; ?>" value="<?= htmlspecialchars($selectedTemaId, ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php endif; ?>
                                     <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
                                 </div>
@@ -338,6 +333,7 @@ if (isset($_POST['update_soal'])) {
                                             <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id_tema']; ?>)">Edit</button>
                                         </form>
+                                        <button type="button" class="btn btn-sm btn-info" onclick="showTab('soal')">Edit Soal</button>
                                         <a href="?delete_tema=<?= $tema['id_tema']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
                                     </td>
                                 </tr>
@@ -385,6 +381,14 @@ if (isset($_POST['update_soal'])) {
         var row = document.getElementById('editRow' + id);
         if (!row) return;
         row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
+    }
+
+    function showTab(tabKey) {
+        var tabEl = document.querySelector('#' + tabKey + '-tab');
+        if (!tabEl) return;
+        var tab = new bootstrap.Tab(tabEl);
+        tab.show();
+        window.location.hash = tabKey;
     }
 </script>
 </body>
