@@ -59,9 +59,14 @@ $filter_kelas = isset($_GET['filter_kelas']) ? mysqli_real_escape_string($conn, 
 <body class="bg-light">
 
 <nav class="navbar navbar-dark bg-danger mb-4 shadow">
-    <div class="container">
-        <a class="navbar-brand" href="#">Admin Panel UNISDA</a>
-        <a href="logout.php" class="btn btn-sm btn-light">Logout</a>
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <a class="navbar-brand" href="#">Admin Panel UNISDA</a>
+        </div>
+        <div>
+            <a href="kelola_soal.php" class="btn btn-sm btn-warning me-2">Kelola Soal</a>
+            <a href="logout.php" class="btn btn-sm btn-light">Logout</a>
+        </div>
     </div>
 </nav>
 
