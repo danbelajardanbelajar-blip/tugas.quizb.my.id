@@ -40,6 +40,53 @@ if (isset($_GET['delete_soal'])) {
     }
 }
 
+// PROSES TAMBAH TEMA
+if (isset($_POST['add_tema'])) {
+    $kelas      = mysqli_real_escape_string($conn, trim($_POST['kelas']));
+    $kelompok   = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
+    $nama_tema  = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
+
+    if ($kelas === '' || $kelompok === '' || $nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Semua field tema harus diisi.</div>";
+    } else {
+        $insert = "INSERT INTO tema_masalah (kelas, kelompok, nama_tema) VALUES ('$kelas', '$kelompok', '$nama_tema')";
+        if ($conn->query($insert)) {
+            $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil ditambahkan! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+        } else {
+            $pesan = "<div class='alert alert-danger'>Gagal menambahkan tema: " . htmlspecialchars($conn->error) . "</div>";
+        }
+    }
+}
+
+// PROSES EDIT TEMA
+if (isset($_POST['edit_tema'])) {
+    $temaId     = intval($_POST['tema_id']);
+    $kelas      = mysqli_real_escape_string($conn, trim($_POST['kelas']));
+    $kelompok   = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
+    $nama_tema  = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
+
+    if ($kelas === '' || $kelompok === '' || $nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Semua field tema harus diisi.</div>";
+    } else {
+        $update = "UPDATE tema_masalah SET kelas = '$kelas', kelompok = '$kelompok', nama_tema = '$nama_tema' WHERE id = $temaId";
+        if ($conn->query($update)) {
+            $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+        } else {
+            $pesan = "<div class='alert alert-danger'>Gagal memperbarui tema: " . htmlspecialchars($conn->error) . "</div>";
+        }
+    }
+}
+
+// PROSES HAPUS TEMA
+if (isset($_GET['delete_tema'])) {
+    $deleteTema = intval($_GET['delete_tema']);
+    if ($conn->query("DELETE FROM tema_masalah WHERE id = $deleteTema")) {
+        $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil dihapus! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+    } else {
+        $pesan = "<div class='alert alert-danger'>Gagal menghapus tema.</div>";
+    }
+}
+
 // PROSES UPDATE SOAL
 if (isset($_POST['update_soal'])) {
     $berhasil = true;
@@ -90,6 +137,9 @@ if (isset($_POST['update_soal'])) {
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-primary" id="soal-tab" data-bs-toggle="tab" data-bs-target="#soal" type="button" role="tab"><i class="bi bi-pencil-square"></i> Edit Pertanyaan Soal</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-success" id="tema-tab" data-bs-toggle="tab" data-bs-target="#tema" type="button" role="tab"><i class="bi bi-tags"></i> Kelola Tema</button>
         </li>
     </ul>
 
@@ -191,9 +241,113 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
+        <!-- TAB 3: KELOLA TEMA -->
+        <div class="tab-pane fade" id="tema" role="tabpanel">
+            <div class="card shadow-sm border-success mb-4">
+                <div class="card-header bg-success text-white font-weight-bold">Tambah Tema Soal Baru</div>
+                <div class="card-body">
+                    <form action="" method="POST" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Kelas</label>
+                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: XII-A" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kelompok Tema</label>
+                            <input type="text" name="kelompok" class="form-control" placeholder="Contoh: Fiqih Bayi" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Nama Tema</label>
+                            <input type="text" name="nama_tema" class="form-control" placeholder="Contoh: Analisis Bayi Tabung" required>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" name="add_tema" class="btn btn-success">Simpan Tema Baru</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-secondary">
+                <div class="card-header bg-secondary text-white font-weight-bold">Daftar Tema</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">No</th>
+                                    <th>Kelas</th>
+                                    <th>Kelompok</th>
+                                    <th>Nama Tema</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $noTema = 1;
+                                $query_tema = $conn->query("SELECT * FROM tema_masalah ORDER BY kelas ASC, kelompok ASC, nama_tema ASC");
+                                if ($query_tema && $query_tema->num_rows > 0) {
+                                    while ($tema = $query_tema->fetch_assoc()) {
+                                ?>
+                                <tr>
+                                    <td class="text-center"><?= $noTema++; ?></td>
+                                    <td><?= htmlspecialchars($tema['kelas']); ?></td>
+                                    <td><?= htmlspecialchars($tema['kelompok']); ?></td>
+                                    <td><?= htmlspecialchars($tema['nama_tema']); ?></td>
+                                    <td class="text-center">
+                                        <form action="" method="POST" class="d-inline-flex gap-1 align-items-center">
+                                            <input type="hidden" name="tema_id" value="<?= $tema['id']; ?>">
+                                            <input type="hidden" name="kelas" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <input type="hidden" name="kelompok" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id']; ?>)">Edit</button>
+                                        </form>
+                                        <a href="?delete_tema=<?= $tema['id']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
+                                    </td>
+                                </tr>
+                                <tr id="editRow<?= $tema['id']; ?>" class="collapse-row" style="display:none;">
+                                    <td colspan="5">
+                                        <form action="" method="POST" class="row g-3 align-items-end">
+                                            <input type="hidden" name="tema_id" value="<?= $tema['id']; ?>">
+                                            <div class="col-md-2">
+                                                <label class="form-label">Kelas</label>
+                                                <input type="text" name="kelas" class="form-control" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Kelompok</label>
+                                                <input type="text" name="kelompok" class="form-control" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Nama Tema</label>
+                                                <input type="text" name="nama_tema" class="form-control" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="submit" name="edit_tema" class="btn btn-success w-100">Simpan</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <?php
+                                    }
+                                } else {
+                                    echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada tema.</td></tr>";
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleEdit(id) {
+        var row = document.getElementById('editRow' + id);
+        if (!row) return;
+        row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
+    }
+</script>
 </body>
 </html>
