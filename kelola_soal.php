@@ -20,6 +20,22 @@ if ($conn->connect_error) {
 
 $pesan = "";
 
+// Cek apakah kolom tema_id sudah ada di tb_daftar_soal
+$temaIdExists = false;
+$checkTemaId = $conn->query("SHOW COLUMNS FROM tb_daftar_soal LIKE 'tema_id'");
+if ($checkTemaId && $checkTemaId->num_rows > 0) {
+    $temaIdExists = true;
+}
+
+// Muat semua tema dari tabel tema_masalah
+$temaList = [];
+$temaRes = $conn->query("SELECT id_tema, kelas, kelompok, nama_tema FROM tema_masalah ORDER BY kelas ASC, kelompok ASC, nama_tema ASC");
+if ($temaRes) {
+    while ($temaRow = $temaRes->fetch_assoc()) {
+        $temaList[] = $temaRow;
+    }
+}
+
 // PROSES HAPUS JAWABAN MAHASISWA
 if (isset($_GET['delete_jawaban'])) {
     $deleteId = intval($_GET['delete_jawaban']);
@@ -68,7 +84,7 @@ if (isset($_POST['edit_tema'])) {
     if ($kelas === '' || $kelompok === '' || $nama_tema === '') {
         $pesan = "<div class='alert alert-danger'>Semua field tema harus diisi.</div>";
     } else {
-        $update = "UPDATE tema_masalah SET kelas = '$kelas', kelompok = '$kelompok', nama_tema = '$nama_tema' WHERE id = $temaId";
+        $update = "UPDATE tema_masalah SET kelas = '$kelas', kelompok = '$kelompok', nama_tema = '$nama_tema' WHERE id_tema = $temaId";
         if ($conn->query($update)) {
             $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
         } else {
@@ -80,7 +96,7 @@ if (isset($_POST['edit_tema'])) {
 // PROSES HAPUS TEMA
 if (isset($_GET['delete_tema'])) {
     $deleteTema = intval($_GET['delete_tema']);
-    if ($conn->query("DELETE FROM tema_masalah WHERE id = $deleteTema")) {
+    if ($conn->query("DELETE FROM tema_masalah WHERE id_tema = $deleteTema")) {
         $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil dihapus! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     } else {
         $pesan = "<div class='alert alert-danger'>Gagal menghapus tema.</div>";
@@ -92,12 +108,19 @@ if (isset($_POST['update_soal'])) {
     $berhasil = true;
     for ($i = 1; $i <= 17; $i++) {
         $teks_baru = mysqli_real_escape_string($conn, $_POST['soal_' . $i]);
-        $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $i";
+        $tema_id = $temaIdExists && isset($_POST['tema_id_' . $i]) ? intval($_POST['tema_id_' . $i]) : null;
+
+        if ($temaIdExists) {
+            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru', tema_id = " . ($tema_id !== null ? $tema_id : 'NULL') . " WHERE id = $i";
+        } else {
+            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $i";
+        }
+
         if (!$conn->query($query_update)) {
             $berhasil = false;
         }
     }
-    
+
     if ($berhasil) {
         $pesan = "<div class='alert alert-success alert-dismissible fade show'>Daftar soal berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     } else {
@@ -223,10 +246,25 @@ if (isset($_POST['update_soal'])) {
                         <?php
                         $query_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
                         while ($s = $query_soal->fetch_assoc()) {
+                            $selectedTemaId = $temaIdExists ? ($s['tema_id'] ?? '') : '';
                         ?>
                             <div class="mb-3 d-flex gap-2 align-items-start">
                                 <div class="flex-grow-1">
                                     <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
+                                    <?php if ($temaIdExists && count($temaList) > 0) : ?>
+                                        <select name="tema_id_<?= $s['id']; ?>" class="form-select mb-2" required>
+                                            <option value="">-- Pilih Tema Soal --</option>
+                                            <?php foreach ($temaList as $temaOption) : ?>
+                                                <option value="<?= $temaOption['id_tema']; ?>" <?= $temaOption['id_tema'] == $selectedTemaId ? 'selected' : ''; ?>>
+                                                    <?= htmlspecialchars($temaOption['kelas'] . ' | ' . $temaOption['kelompok'] . ' | ' . $temaOption['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php elseif ($temaIdExists) : ?>
+                                        <div class="alert alert-warning p-2">Tidak ada tema tersedia. Tambahkan tema terlebih dahulu.</div>
+                                    <?php else : ?>
+                                        <div class="alert alert-info p-2">Jalankan script SQL untuk menambahkan kolom tema_id pada tb_daftar_soal agar pertanyaan dapat dikaitkan dengan tema.</div>
+                                    <?php endif; ?>
                                     <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
                                 </div>
                                 <div class="align-self-end">
@@ -294,19 +332,19 @@ if (isset($_POST['update_soal'])) {
                                     <td><?= htmlspecialchars($tema['nama_tema']); ?></td>
                                     <td class="text-center">
                                         <form action="" method="POST" class="d-inline-flex gap-1 align-items-center">
-                                            <input type="hidden" name="tema_id" value="<?= $tema['id']; ?>">
+                                            <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
                                             <input type="hidden" name="kelas" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <input type="hidden" name="kelompok" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
-                                            <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id']; ?>)">Edit</button>
+                                            <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id_tema']; ?>)">Edit</button>
                                         </form>
-                                        <a href="?delete_tema=<?= $tema['id']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
+                                        <a href="?delete_tema=<?= $tema['id_tema']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
                                     </td>
                                 </tr>
-                                <tr id="editRow<?= $tema['id']; ?>" class="collapse-row" style="display:none;">
+                                <tr id="editRow<?= $tema['id_tema']; ?>" class="collapse-row" style="display:none;">
                                     <td colspan="5">
                                         <form action="" method="POST" class="row g-3 align-items-end">
-                                            <input type="hidden" name="tema_id" value="<?= $tema['id']; ?>">
+                                            <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
                                             <div class="col-md-2">
                                                 <label class="form-label">Kelas</label>
                                                 <input type="text" name="kelas" class="form-control" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>" required>
