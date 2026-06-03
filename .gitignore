@@ -1,0 +1,5 @@
+# Ignore uploads folder and its contents
+uploads/
+
+# Ignore PHP error log if present
+error_log
