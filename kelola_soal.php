@@ -20,6 +20,26 @@ if ($conn->connect_error) {
 
 $pesan = "";
 
+// PROSES HAPUS JAWABAN MAHASISWA
+if (isset($_GET['delete_jawaban'])) {
+    $deleteId = intval($_GET['delete_jawaban']);
+    if ($conn->query("DELETE FROM tb_soal WHERE id = $deleteId")) {
+        $pesan = "<div class='alert alert-success alert-dismissible fade show'>Jawaban mahasiswa berhasil dihapus! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+    } else {
+        $pesan = "<div class='alert alert-danger'>Gagal menghapus jawaban mahasiswa.</div>";
+    }
+}
+
+// PROSES HAPUS SOAL
+if (isset($_GET['delete_soal'])) {
+    $deleteSoal = intval($_GET['delete_soal']);
+    if ($conn->query("DELETE FROM tb_daftar_soal WHERE id = $deleteSoal")) {
+        $pesan = "<div class='alert alert-success alert-dismissible fade show'>Soal berhasil dihapus! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
+    } else {
+        $pesan = "<div class='alert alert-danger'>Gagal menghapus soal.</div>";
+    }
+}
+
 // PROSES UPDATE SOAL
 if (isset($_POST['update_soal'])) {
     $berhasil = true;
@@ -102,7 +122,10 @@ if (isset($_POST['update_soal'])) {
                                     <td class="fw-bold"><?= htmlspecialchars($r['nama_mahasiswa']); ?></td>
                                     <td><?= date('d M Y - H:i', strtotime($r['waktu_submit'])); ?></td>
                                     <td class="text-center">
-                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalJawaban<?= $r['id']; ?>">Lihat Jawaban</button>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalJawaban<?= $r['id']; ?>">Lihat Jawaban</button>
+                                            <a href="?delete_jawaban=<?= $r['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus semua jawaban <?= htmlspecialchars($r['nama_mahasiswa'], ENT_QUOTES, 'UTF-8'); ?>?')">Hapus</a>
+                                        </div>
                                     </td>
                                 </tr>
 
@@ -151,9 +174,14 @@ if (isset($_POST['update_soal'])) {
                         $query_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
                         while ($s = $query_soal->fetch_assoc()) {
                         ?>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
-                                <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
+                            <div class="mb-3 d-flex gap-2 align-items-start">
+                                <div class="flex-grow-1">
+                                    <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
+                                    <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
+                                </div>
+                                <div class="align-self-end">
+                                    <a href="?delete_soal=<?= $s['id']; ?>#soal" class="btn btn-danger btn-sm" onclick="return confirm('Hapus soal nomor <?= $s['id']; ?>?')">Delete</a>
+                                </div>
                             </div>
                         <?php } ?>
                         <hr>
