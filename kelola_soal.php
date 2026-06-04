@@ -240,9 +240,6 @@ if (isset($_POST['update_soal'])) {
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-warning" id="riwayat-tab" data-bs-toggle="tab" data-bs-target="#riwayat" type="button" role="tab"><i class="bi bi-clock-history"></i> Riwayat Tugas</button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold text-dark" id="jawaban-tab" data-bs-toggle="tab" data-bs-target="#jawaban" type="button" role="tab"><i class="bi bi-chat-left-text"></i> Lihat Jawaban</button>
-        </li>
     </ul>
 
     <div class="tab-content" id="myTabContent">
@@ -541,146 +538,6 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
-        <!-- TAB: LIHAT JAWABAN MAHASISWA -->
-        <div class="tab-pane fade" id="jawaban" role="tabpanel">
-            <?php
-            // Pre-fetch soal per tema untuk modal
-            $soalPerTema = [];
-            $resSoalAll = $conn->query("SELECT tema_id, teks_soal FROM tb_daftar_soal ORDER BY tema_id ASC, id ASC");
-            if ($resSoalAll) {
-                while ($rowSoal = $resSoalAll->fetch_assoc()) {
-                    $soalPerTema[$rowSoal['tema_id']][] = $rowSoal['teks_soal'];
-                }
-            }
-
-            $query_jawaban = $conn->query("
-                SELECT ts.*, u.nama_lengkap, u.kelas AS kelas_user,
-                       tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
-                FROM tb_soal ts
-                LEFT JOIN user u ON u.username = ts.nama_mahasiswa
-                LEFT JOIN tema_masalah tm ON tm.id_tema = ts.tema_id
-                ORDER BY ts.waktu_submit DESC
-            ");
-            if ($query_jawaban === false) {
-                $query_jawaban = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
-            }
-            ?>
-            <div class="card shadow-sm border-dark">
-                <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-chat-left-text"></i> Data Rekapitulasi Jawaban</span>
-                    <?php if ($query_jawaban): ?>
-                        <span class="badge bg-secondary"><?= $query_jawaban->num_rows; ?> mahasiswa</span>
-                    <?php endif; ?>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center">No</th>
-                                    <th>Nama / NIM</th>
-                                    <th>Tema</th>
-                                    <th>Waktu Simpan</th>
-                                    <th class="text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            $modalBuf = '';
-                            $noJ = 1;
-                            if ($query_jawaban && $query_jawaban->num_rows > 0):
-                                while ($r = $query_jawaban->fetch_assoc()):
-                                    $namaLengkap  = $r['nama_lengkap'] ?: $r['nama_mahasiswa'];
-                                    $temaLabel    = $r['nama_tema'] ? htmlspecialchars($r['nama_tema']) : '<span class="text-muted fst-italic">Tidak tercatat</span>';
-                                    $temaKelompok = $r['kelompok_tema'] ?? '';
-                                    $temaKelas    = $r['kelas_tema'] ?? '';
-                                    $soalList     = ($r['tema_id'] && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
-                            ?>
-                                <tr>
-                                    <td class="text-center"><?= $noJ++; ?></td>
-                                    <td>
-                                        <span class="fw-bold"><?= htmlspecialchars($namaLengkap); ?></span><br>
-                                        <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
-                                        <?php if ($r['kelas_user']): ?>
-                                            <small class="badge bg-secondary"><?= htmlspecialchars($r['kelas_user']); ?></small>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?= $temaLabel; ?>
-                                        <?php if ($temaKelompok || $temaKelas): ?>
-                                            <br><small class="text-muted"><?= htmlspecialchars("$temaKelas $temaKelompok"); ?></small>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><small><?= date('d M Y - H:i', strtotime($r['waktu_submit'])); ?></small></td>
-                                    <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mJawaban<?= $r['id']; ?>">
-                                                <i class="bi bi-eye"></i> Lihat
-                                            </button>
-                                            <a href="?delete_jawaban=<?= $r['id']; ?>#jawaban" class="btn btn-danger btn-sm"
-                                               onclick="return confirm('Hapus jawaban <?= htmlspecialchars($namaLengkap, ENT_QUOTES, 'UTF-8'); ?>?')">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php
-                                    // Buffer modal — JANGAN taruh di dalam <tbody>
-                                    ob_start(); ?>
-                                <div class="modal fade" id="mJawaban<?= $r['id']; ?>" tabindex="-1">
-                                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-dark text-white">
-                                                <h5 class="modal-title">
-                                                    <i class="bi bi-person-circle"></i>
-                                                    <?= htmlspecialchars($namaLengkap); ?>
-                                                    <small class="fw-normal opacity-75 fs-6">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small>
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php if ($r['nama_tema']): ?>
-                                                    <div class="alert alert-info py-2 mb-3">
-                                                        <strong>Tema:</strong> <?= htmlspecialchars($r['nama_tema']); ?>
-                                                        <?php if ($temaKelompok || $temaKelas): ?>
-                                                            &nbsp;·&nbsp;<small><?= htmlspecialchars("Kelas $temaKelas · $temaKelompok"); ?></small>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <?php for ($i = 1; $i <= 17; $i++):
-                                                    $jawaban  = $r['jawaban_' . $i] ?? '';
-                                                    $soalTeks = $soalList[$i - 1] ?? null;
-                                                    if ($jawaban === '' && $soalTeks === null) continue;
-                                                ?>
-                                                    <div class="jawaban-box">
-                                                        <div class="soal-title">
-                                                            <?= $soalTeks ? $i . '. ' . htmlspecialchars($soalTeks) : 'Pertanyaan ' . $i; ?>
-                                                        </div>
-                                                        <div><?= $jawaban !== '' ? nl2br(htmlspecialchars($jawaban)) : '<em class="text-muted">Belum dijawab</em>'; ?></div>
-                                                    </div>
-                                                <?php endfor; ?>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php
-                                    $modalBuf .= ob_get_clean();
-                                endwhile;
-                            else: ?>
-                                <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>
-                            <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <!-- Modal dikeluarkan di luar tabel agar HTML valid -->
-            <?= $modalBuf; ?>
-        </div>
-
     </div><!-- end tab-content -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -720,7 +577,7 @@ if (isset($_POST['update_soal'])) {
     document.addEventListener('DOMContentLoaded', function() {
         var hash = window.location.hash.substring(1);
         var urlParams = new URLSearchParams(window.location.search);
-        if (hash && ['soal','tema','riwayat','jawaban'].includes(hash)) {
+        if (hash && ['soal','tema','riwayat'].includes(hash)) {
             var tabEl = document.querySelector('#' + hash + '-tab');
             if (tabEl) new bootstrap.Tab(tabEl).show();
         } else if (urlParams.get('tab') === 'riwayat') {
