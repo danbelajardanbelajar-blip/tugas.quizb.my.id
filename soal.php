@@ -89,12 +89,28 @@ if ($hasil_data->num_rows > 0) {
 }
 $ambil_data->close();
 
-// Mengambil Daftar Soal dari Database agar dinamis
+// Ambil parameter tema dari URL
+$tema_id_param  = isset($_GET['tema']) ? intval($_GET['tema']) : 0;
+$nama_tema_soal = 'Analisis Hukum Fiqih'; // default
+
+if ($tema_id_param > 0) {
+    $res_tema = $conn->query("SELECT nama_tema FROM tema_masalah WHERE id_tema = $tema_id_param");
+    if ($res_tema && $res_tema->num_rows > 0) {
+        $nama_tema_soal = $res_tema->fetch_assoc()['nama_tema'];
+    }
+}
+
+// Mengambil Daftar Soal dari Database (filter by tema jika ada)
 $daftar_soal = [];
-$ambil_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
+if ($tema_id_param > 0) {
+    $ambil_soal = $conn->query("SELECT * FROM tb_daftar_soal WHERE tema_id = $tema_id_param ORDER BY id ASC");
+} else {
+    $ambil_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
+}
 if ($ambil_soal) {
+    $soal_no = 1;
     while ($row = $ambil_soal->fetch_assoc()) {
-        $daftar_soal[$row['id']] = $row['teks_soal'];
+        $daftar_soal[$row['id']] = ['teks' => $row['teks_soal'], 'no' => $soal_no++];
     }
 }
 ?>
@@ -104,7 +120,7 @@ if ($ambil_soal) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tugas Analisis Fiqih - Bayi Tabung</title>
+    <title><?= htmlspecialchars($nama_tema_soal, ENT_QUOTES, 'UTF-8'); ?> - Mashailul Fiqhiyah</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;}
@@ -123,7 +139,7 @@ if ($ambil_soal) {
 <body>
 
 <div class="container">
-    <h2>Tugas Analisis Hukum Bayi Tabung</h2>
+    <h2><?= htmlspecialchars($nama_tema_soal, ENT_QUOTES, 'UTF-8'); ?></h2>
     <div class="user-info">
         👤 Dikerjakan oleh: <?= htmlspecialchars($nama); ?>
     </div>
@@ -131,22 +147,29 @@ if ($ambil_soal) {
     <?= $pesan; ?>
 
     <form action="" method="post" id="formSoal">
-        <?php foreach ($daftar_soal as $nomor => $soal) : ?>
+        <?php if (empty($daftar_soal)): ?>
+            <div style="text-align:center; padding:2rem; color:#7f8c8d;">
+                <p>Belum ada soal untuk tema ini.</p>
+                <a href="index.php" style="color:#3498db;">Kembali ke Dashboard</a>
+            </div>
+        <?php else: ?>
+        <?php foreach ($daftar_soal as $soal_id => $soal_data): ?>
             <div class="form-group">
-                <label><?= $nomor . ". " . $soal ?></label>
-                <textarea 
-                    name="jawaban_<?= $nomor ?>" 
+                <label><?= $soal_data['no'] . ". " . htmlspecialchars($soal_data['teks'], ENT_QUOTES, 'UTF-8'); ?></label>
+                <textarea
+                    name="jawaban_<?= $soal_id ?>"
                     class="soal-textarea"
-                    required 
+                    required
                     autocomplete="off"
-                    oncopy="return false;" 
-                    oncut="return false;" 
-                    onpaste="return false;" 
+                    oncopy="return false;"
+                    oncut="return false;"
+                    onpaste="return false;"
                     ondrop="return false;"
                     placeholder="Ketik jawaban di sini..."
-                ><?= htmlspecialchars($data_tersimpan[$nomor]); ?></textarea>
+                ><?= htmlspecialchars($data_tersimpan[$soal_id] ?? ''); ?></textarea>
             </div>
         <?php endforeach; ?>
+        <?php endif; ?>
 
         <button type="submit" name="submit" class="btn-submit">Selesai & Kumpulkan Tugas</button>
         <a href="index.php" style="display: block; text-align: center; margin-top: 15px; color: #7f8c8d; text-decoration: none;">Kembali ke Dashboard</a>
