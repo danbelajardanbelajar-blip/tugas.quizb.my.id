@@ -80,6 +80,44 @@ $resJwb = $conn->query("
            ts.jawaban_6,  ts.jawaban_7,  ts.jawaban_8,  ts.jawaban_9,  ts.jawaban_10,
            ts.jawaban_11, ts.jawaban_12, ts.jawaban_13, ts.jawaban_14, ts.jawaban_15,
            ts.jawaban_16, ts.jawaban_17,
+           (IF(TRIM(ts.jawaban_1) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_2) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_3) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_4) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_5) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_6) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_7) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_8) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_9) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_10) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_11) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_12) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_13) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_14) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_15) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_16) <> '', 1, 0) +
+            IF(TRIM(ts.jawaban_17) <> '', 1, 0)
+           ) AS jawaban_terisi_count,
+           ROUND((
+            (IF(TRIM(ts.jawaban_1) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_2) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_3) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_4) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_5) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_6) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_7) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_8) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_9) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_10) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_11) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_12) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_13) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_14) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_15) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_16) <> '', 1, 0) +
+             IF(TRIM(ts.jawaban_17) <> '', 1, 0)
+            ) / 17
+           ) * 100, 1) AS jawaban_terisi_percent,
            u.nama_lengkap, u.kelas AS kelas_user,
            tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
     FROM tb_soal ts
@@ -589,13 +627,8 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                                     $nim         = htmlspecialchars($r['nama_mahasiswa']);
                                     $namaLengkap = htmlspecialchars($r['nama_lengkap'] ?: '');
                                     $kelas       = htmlspecialchars($r['kelas_user'] ?: '');
-                                    $answeredCount = 0;
-                                    for ($i = 1; $i <= $totalQuestions; $i++) {
-                                        if (trim($r['jawaban_' . $i] ?? '') !== '') {
-                                            $answeredCount++;
-                                        }
-                                    }
-                                    $percent = round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
+                                    $answeredCount = isset($r['jawaban_terisi_count']) ? intval($r['jawaban_terisi_count']) : 0;
+                                    $percent = isset($r['jawaban_terisi_percent']) ? floatval($r['jawaban_terisi_percent']) : round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
                                 ?>
                                 <tr>
                                     <td class="text-center"><?= $noJ + 1; ?></td>
@@ -652,13 +685,8 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
 // ===== MODAL JAWABAN — di luar container agar HTML valid =====
 foreach ($semuaJawaban as $r):
     $namaDisplay = $r['nama_lengkap'] ?: $r['nama_mahasiswa'];
-    $answeredCount = 0;
-    for ($i = 1; $i <= $totalQuestions; $i++) {
-        if (trim($r['jawaban_' . $i] ?? '') !== '') {
-            $answeredCount++;
-        }
-    }
-    $percent = round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
+    $answeredCount = isset($r['jawaban_terisi_count']) ? intval($r['jawaban_terisi_count']) : 0;
+    $percent = isset($r['jawaban_terisi_percent']) ? floatval($r['jawaban_terisi_percent']) : round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
     // Karena tema_id sering NULL, gunakan soal dari tema apapun yang tersedia sebagai fallback
     if (!empty($r['tema_id']) && isset($soalPerTema[$r['tema_id']])) {
         $soalList = $soalPerTema[$r['tema_id']];
