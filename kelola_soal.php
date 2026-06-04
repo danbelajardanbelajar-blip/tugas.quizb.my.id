@@ -255,9 +255,17 @@ if (isset($_POST['update_soal'])) {
                                     LEFT JOIN user u ON u.username = ts.nama_mahasiswa
                                     ORDER BY ts.waktu_submit DESC
                                 ");
-                                if ($query_jawaban->num_rows > 0) {
+
+                                // Jika query gagal, fallback tanpa JOIN
+                                if ($query_jawaban === false) {
+                                    $query_jawaban = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
+                                }
+
+                                if ($query_jawaban && $query_jawaban->num_rows > 0) {
                                     while ($r = $query_jawaban->fetch_assoc()) {
+                                        $r['nama_lengkap'] = $r['nama_lengkap'] ?? $r['nama_mahasiswa'];
                                 ?>
+
                                 <tr>
                                     <td class="text-center"><?= $no++; ?></td>
                                     <td>
