@@ -59,7 +59,7 @@ if ($resSoal) {
     }
 }
 
-// Ambil semua jawaban mahasiswa
+// Ambil semua jawaban mahasiswa (tanpa filter tema_id karena bisa NULL)
 $semuaJawaban = [];
 $resJwb = $conn->query("
     SELECT ts.id, ts.nama_mahasiswa, ts.tema_id, ts.waktu_submit,
@@ -77,6 +77,19 @@ $resJwb = $conn->query("
 if ($resJwb) {
     while ($rj = $resJwb->fetch_assoc()) {
         $semuaJawaban[] = $rj;
+    }
+} elseif ($conn->errno) {
+    // Fallback: query tanpa JOIN jika ada masalah kolom
+    $resJwb2 = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
+    if ($resJwb2) {
+        while ($rj = $resJwb2->fetch_assoc()) {
+            $rj['nama_lengkap'] = '';
+            $rj['kelas_user']   = '';
+            $rj['nama_tema']    = '';
+            $rj['kelompok_tema']= '';
+            $rj['kelas_tema']   = '';
+            $semuaJawaban[] = $rj;
+        }
     }
 }
 
@@ -596,7 +609,15 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
 // ===== MODAL JAWABAN — di luar container agar HTML valid =====
 foreach ($semuaJawaban as $r):
     $namaDisplay = $r['nama_lengkap'] ?: $r['nama_mahasiswa'];
-    $soalList    = (!empty($r['tema_id']) && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
+    // Karena tema_id sering NULL, gunakan soal dari tema apapun yang tersedia sebagai fallback
+    if (!empty($r['tema_id']) && isset($soalPerTema[$r['tema_id']])) {
+        $soalList = $soalPerTema[$r['tema_id']];
+    } elseif (!empty($soalPerTema)) {
+        // Abaikan id_theme — pakai soal pertama yang tersedia
+        $soalList = reset($soalPerTema);
+    } else {
+        $soalList = [];
+    }
 ?>
 <div class="modal fade" id="modalJwb<?= $r['id']; ?>" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -624,7 +645,7 @@ foreach ($semuaJawaban as $r):
                 for ($i = 1; $i <= 17; $i++):
                     $jawaban  = trim($r['jawaban_' . $i] ?? '');
                     $soalTeks = $soalList[$i - 1] ?? null;
-                    if ($jawaban === '' && $soalTeks === null) { continue; }
+                    if ($jawaban === '') { continue; } // Hanya skip jika jawaban benar-benar kosong
                     $adaIsi = true;
                 ?>
                 <div class="jawaban-box">
@@ -636,7 +657,7 @@ foreach ($semuaJawaban as $r):
                         <?php endif; ?>
                     </div>
                     <div>
-                        <?= $jawaban !== '' ? nl2br(htmlspecialchars($jawaban)) : '<em class="text-muted">—</em>'; ?>
+                        <?= nl2br(htmlspecialchars($jawaban)); ?>
                     </div>
                 </div>
                 <?php endfor; ?>
