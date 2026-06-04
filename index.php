@@ -19,10 +19,10 @@ include 'koneksi.php';
 
 // Ambil data mahasiswa yang sedang login
 $user_sekarang = $_SESSION['username'];
-$query_user    = mysqli_query($conn, "SELECT kelas, nama FROM user WHERE username = '$user_sekarang'");
-$data_user     = mysqli_fetch_assoc($query_user);
+$query_user    = mysqli_query($conn, "SELECT kelas FROM user WHERE username = '$user_sekarang'");
+$data_user     = $query_user ? mysqli_fetch_assoc($query_user) : null;
 $kelas_mhs     = $data_user['kelas'] ?? '';
-$nama_mhs      = $data_user['nama']  ?? $user_sekarang;
+$nama_mhs      = $user_sekarang; // gunakan username sebagai display name
 
 // Cek apakah mahasiswa ini sudah pernah mengerjakan soal (tb_soal)
 $cek_tb_soal   = mysqli_query($conn, "SELECT id, waktu_submit FROM tb_soal WHERE nama_mahasiswa = '$user_sekarang' LIMIT 1");
@@ -49,7 +49,6 @@ $query_tema_soal = mysqli_query($conn, "
     ORDER BY tm.kelompok ASC, tm.nama_tema ASC
 ");
 
-ob_end_flush();
 ?>
 <!DOCTYPE html>
 <html lang="id">
