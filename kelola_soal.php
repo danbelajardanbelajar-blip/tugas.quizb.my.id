@@ -58,6 +58,18 @@ if (isset($_GET['delete_soal'])) {
     }
 }
 
+// PROSES TAMBAH SOAL
+if (isset($_POST['add_soal'])) {
+    $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
+    $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal" . ($temaIdExists ? ", tema_id" : "") . ") VALUES ('{$defaultText}'" . ($temaIdExists ? ", NULL" : "") . ")");
+    if ($insertSoal) {
+        header("Location: kelola_soal.php#soal");
+        exit();
+    } else {
+        $pesan = "<div class='alert alert-danger'>Gagal menambahkan soal: " . htmlspecialchars($conn->error) . "</div>";
+    }
+}
+
 // PROSES TAMBAH TEMA
 if (isset($_POST['add_tema'])) {
     $kelas      = mysqli_real_escape_string($conn, trim($_POST['kelas']));
@@ -161,7 +173,7 @@ if (isset($_POST['update_soal'])) {
             <button class="nav-link active fw-bold" id="jawaban-tab" data-bs-toggle="tab" data-bs-target="#jawaban" type="button" role="tab">Daftar Jawaban Mahasiswa</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold text-primary" id="soal-tab" data-bs-toggle="tab" data-bs-target="#soal" type="button" role="tab"><i class="bi bi-pencil-square"></i> Edit Pertanyaan Soal</button>
+            <button class="nav-link fw-bold text-primary" id="soal-tab" data-bs-toggle="tab" data-bs-target="#soal" type="button" role="tab"><i class="bi bi-pencil-square"></i> Edit Soal</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-success" id="tema-tab" data-bs-toggle="tab" data-bs-target="#tema" type="button" role="tab"><i class="bi bi-tags"></i> Kelola Tema</button>
@@ -239,10 +251,15 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
-        <!-- TAB 2: EDIT PERTANYAAN SOAL -->
+        <!-- TAB 2: EDIT SOAL -->
         <div class="tab-pane fade" id="soal" role="tabpanel">
             <div class="card shadow-sm border-primary">
-                <div class="card-header bg-primary text-white font-weight-bold">Ubah Teks Pertanyaan</div>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span class="font-weight-bold">Edit Soal</span>
+                    <form action="" method="POST" class="mb-0">
+                        <button type="submit" name="add_soal" class="btn btn-light btn-sm">Tambahkan Soal</button>
+                    </form>
+                </div>
                 <div class="card-body">
                     <form action="" method="POST">
                         <?php
@@ -390,6 +407,16 @@ if (isset($_POST['update_soal'])) {
         tab.show();
         window.location.hash = tabKey;
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash) {
+            var hash = window.location.hash.substring(1);
+            var tabEl = document.querySelector('#' + hash + '-tab');
+            if (tabEl) {
+                new bootstrap.Tab(tabEl).show();
+            }
+        }
+    });
 </script>
 </body>
 </html>
