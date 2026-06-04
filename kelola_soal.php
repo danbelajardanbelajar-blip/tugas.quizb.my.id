@@ -22,6 +22,7 @@ if ($conn->connect_error) {
 $conn->set_charset("utf8mb4");
 
 $pesan = "";
+$totalQuestions = 17;
 
 // Pastikan AUTO_INCREMENT pada tb_daftar_soal (dibungkus try-catch agar aman)
 try {
@@ -573,6 +574,7 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" style="width:50px">No</th>
+                                    <th class="text-center" style="width:120px">Progress</th>
                                     <th>Nama / NIM</th>
                                     <th>Tema</th>
                                     <th>Waktu Simpan</th>
@@ -581,15 +583,28 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                             </thead>
                             <tbody>
                             <?php if (empty($semuaJawaban)): ?>
-                                <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($semuaJawaban as $noJ => $r):
                                     $nim         = htmlspecialchars($r['nama_mahasiswa']);
                                     $namaLengkap = htmlspecialchars($r['nama_lengkap'] ?: '');
                                     $kelas       = htmlspecialchars($r['kelas_user'] ?: '');
+                                    $answeredCount = 0;
+                                    for ($i = 1; $i <= $totalQuestions; $i++) {
+                                        if (trim($r['jawaban_' . $i] ?? '') !== '') {
+                                            $answeredCount++;
+                                        }
+                                    }
+                                    $percent = round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
                                 ?>
                                 <tr>
                                     <td class="text-center"><?= $noJ + 1; ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info text-dark">
+                                            <?= $answeredCount; ?>/<?= $totalQuestions; ?>
+                                            (<?= $percent; ?>%)
+                                        </span>
+                                    </td>
                                     <td>
                                         <?php if ($namaLengkap): ?>
                                             <span class="fw-bold text-dark"><?= $namaLengkap; ?></span>
@@ -637,6 +652,13 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
 // ===== MODAL JAWABAN — di luar container agar HTML valid =====
 foreach ($semuaJawaban as $r):
     $namaDisplay = $r['nama_lengkap'] ?: $r['nama_mahasiswa'];
+    $answeredCount = 0;
+    for ($i = 1; $i <= $totalQuestions; $i++) {
+        if (trim($r['jawaban_' . $i] ?? '') !== '') {
+            $answeredCount++;
+        }
+    }
+    $percent = round($totalQuestions ? ($answeredCount / $totalQuestions * 100) : 0, 1);
     // Karena tema_id sering NULL, gunakan soal dari tema apapun yang tersedia sebagai fallback
     if (!empty($r['tema_id']) && isset($soalPerTema[$r['tema_id']])) {
         $soalList = $soalPerTema[$r['tema_id']];
@@ -665,12 +687,18 @@ foreach ($semuaJawaban as $r):
                     <?php if (!empty($r['kelas_tema']) || !empty($r['kelompok_tema'])): ?>
                         &nbsp;&middot;&nbsp;<small>Kelas <?= htmlspecialchars($r['kelas_tema']); ?> &middot; <?= htmlspecialchars($r['kelompok_tema']); ?></small>
                     <?php endif; ?>
+                    <span class="badge bg-success ms-2">Terisi <?= $answeredCount; ?>/<?= $totalQuestions; ?> (<?= $percent; ?>%)</span>
+                </div>
+                <?php else: ?>
+                <div class="alert alert-secondary py-2 mb-3">
+                    <strong>Progress:</strong>
+                    <span class="badge bg-success ms-2">Terisi <?= $answeredCount; ?>/<?= $totalQuestions; ?> (<?= $percent; ?>%)</span>
                 </div>
                 <?php endif; ?>
 
                 <?php
                 $adaIsi = false;
-                for ($i = 1; $i <= 17; $i++):
+                for ($i = 1; $i <= $totalQuestions; $i++):
                     $jawaban  = trim($r['jawaban_' . $i] ?? '');
                     $soalTeks = $soalList[$i - 1] ?? null;
                     if ($jawaban === '') { continue; } // Hanya skip jika jawaban benar-benar kosong
