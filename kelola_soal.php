@@ -426,15 +426,17 @@ if (isset($_POST['update_soal'])) {
                                     <td><?= htmlspecialchars($tema['kelompok']); ?></td>
                                     <td><?= htmlspecialchars($tema['nama_tema']); ?></td>
                                     <td class="text-center">
-                                        <form action="" method="POST" class="d-inline-flex gap-1 align-items-center">
-                                            <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
-                                            <input type="hidden" name="kelas" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>">
-                                            <input type="hidden" name="kelompok" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>">
-                                            <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
-                                            <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id_tema']; ?>)">Edit</button>
-                                        </form>
-                                        <a href="kelola_soal.php?theme=<?= $tema['id_tema']; ?>#soal" class="btn btn-sm btn-info">Edit Soal</a>
-                                        <a href="?delete_tema=<?= $tema['id_tema']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
+                                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                            <form action="" method="POST" class="m-0">
+                                                <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
+                                                <input type="hidden" name="kelas" value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                <input type="hidden" name="kelompok" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id_tema']; ?>)">Edit</button>
+                                            </form>
+                                            <a href="kelola_soal.php?theme=<?= $tema['id_tema']; ?>#soal" class="btn btn-sm btn-info">Edit Soal</a>
+                                            <a href="?delete_tema=<?= $tema['id_tema']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr id="editRow<?= $tema['id_tema']; ?>" class="collapse-row" style="display:none;">
