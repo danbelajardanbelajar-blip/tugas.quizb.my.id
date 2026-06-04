@@ -72,7 +72,14 @@ if (isset($_POST['add_soal'])) {
         $pesan = "<div class='alert alert-danger'>Pilih tema yang valid terlebih dahulu sebelum menambahkan soal.</div>";
     } else {
         $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
-        $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
+        if ($temaIdExists) {
+            $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
+        } else {
+            // Kolom tema_id belum ada, tambahkan dulu sebelum insert
+            $conn->query("ALTER TABLE tb_daftar_soal ADD COLUMN tema_id INT NULL");
+            $temaIdExists = true;
+            $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
+        }
         if ($insertSoal) {
             header("Location: kelola_soal.php?theme={$active_theme_id}#soal");
             exit();
