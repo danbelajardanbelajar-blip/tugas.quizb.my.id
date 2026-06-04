@@ -122,6 +122,23 @@ if ($ambil_soal) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($nama_tema_soal, ENT_QUOTES, 'UTF-8'); ?> - Mashailul Fiqhiyah</title>
     <style>
+        /* ====== ANTI COPY-PASTE GLOBAL ====== */
+        * {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important; /* Blokir long-press menu di iOS */
+        }
+        /* Textarea tetap bisa diketik, tapi tidak bisa select-all / copy / paste */
+        textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+        /* ====================================== */
+
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;}
         h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;}
@@ -179,7 +196,72 @@ if ($ambil_soal) {
 <!-- Script AJAX untuk Silent Autosave -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        // ============================================================
+        // PROTEKSI COPY-PASTE MENYELURUH (Desktop & HP)
+        // ============================================================
+
+        // 1. Blokir klik kanan (context menu) di seluruh halaman
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 2. Blokir event copy, cut, paste di seluruh halaman
+        document.addEventListener('copy',  function(e) { e.preventDefault(); return false; });
+        document.addEventListener('cut',   function(e) { e.preventDefault(); return false; });
+        document.addEventListener('paste', function(e) { e.preventDefault(); return false; });
+
+        // 3. Blokir shortcut keyboard berbahaya (Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A)
+        document.addEventListener('keydown', function(e) {
+            const key = e.key.toLowerCase();
+            if (e.ctrlKey || e.metaKey) { // metaKey untuk Mac/iPhone keyboard
+                if (['c', 'v', 'x', 'a'].includes(key)) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+
+        // 4. Blokir drag & drop teks ke dalam textarea
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 5. Blokir paste khusus di setiap textarea (lapisan ganda)
         const textareas = document.querySelectorAll('.soal-textarea');
+        textareas.forEach(function(textarea) {
+            textarea.addEventListener('paste', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            textarea.addEventListener('copy', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            textarea.addEventListener('cut', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            textarea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            // Blokir klik kanan di textarea juga
+            textarea.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        });
+
+        // ============================================================
+        // AUTOSAVE SILENT (AJAX)
+        // ============================================================
         const form = document.getElementById('formSoal');
 
         // Trigger autosave ketika kursor keluar (blur/pindah) dari textarea
