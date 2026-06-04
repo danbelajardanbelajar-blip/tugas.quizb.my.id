@@ -65,6 +65,23 @@ if (!$temaRes) {
 }
 
 
+// ── DATA JAWABAN MAHASISWA (diambil di atas agar tidak bentrok di dalam HTML) ──
+$soalPerTema = [];
+$_res = $conn->query("SELECT tema_id, teks_soal FROM tb_daftar_soal ORDER BY tema_id ASC, id ASC");
+if ($_res) { while ($_r = $_res->fetch_assoc()) { $soalPerTema[$_r['tema_id']][] = $_r['teks_soal']; } }
+
+$semuaJawaban = [];
+$_qj = $conn->query("
+    SELECT ts.*, u.nama_lengkap, u.kelas AS kelas_user,
+           tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
+    FROM tb_soal ts
+    LEFT JOIN user u ON u.username = ts.nama_mahasiswa
+    LEFT JOIN tema_masalah tm ON tm.id_tema = ts.tema_id
+    ORDER BY ts.waktu_submit DESC
+");
+if ($_qj) { while ($_row = $_qj->fetch_assoc()) { $semuaJawaban[] = $_row; } }
+// ─────────────────────────────────────────────────────────────────────────────
+
 $active_theme_id = null;
 if (isset($_GET['theme']) && intval($_GET['theme']) > 0) {
     $active_theme_id = intval($_GET['theme']);
@@ -239,6 +256,9 @@ if (isset($_POST['update_soal'])) {
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-warning" id="riwayat-tab" data-bs-toggle="tab" data-bs-target="#riwayat" type="button" role="tab"><i class="bi bi-clock-history"></i> Riwayat Tugas</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-dark" id="jawaban-tab" data-bs-toggle="tab" data-bs-target="#jawaban" type="button" role="tab"><i class="bi bi-chat-left-text"></i> Lihat Jawaban <span class="badge bg-dark ms-1"><?= count($semuaJawaban); ?></span></button>
         </li>
     </ul>
 
@@ -538,6 +558,117 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
+        <!-- TAB: LIHAT JAWABAN MAHASISWA -->
+        <div class="tab-pane fade" id="jawaban" role="tabpanel">
+            <div class="card shadow-sm border-dark">
+                <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-chat-left-text"></i> Jawaban Mahasiswa</span>
+                    <span class="badge bg-secondary"><?= count($semuaJawaban); ?> mahasiswa</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width:50px">No</th>
+                                    <th>Nama / NIM</th>
+                                    <th>Tema</th>
+                                    <th>Waktu Simpan</th>
+                                    <th class="text-center" style="width:120px">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php if (empty($semuaJawaban)): ?>
+                                <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($semuaJawaban as $noIdx => $r): ?>
+                                <tr>
+                                    <td class="text-center"><?= $noIdx + 1; ?></td>
+                                    <td>
+                                        <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap'] ?: $r['nama_mahasiswa']); ?></span><br>
+                                        <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
+                                        <?php if (!empty($r['kelas_user'])): ?>
+                                            <span class="badge bg-secondary ms-1"><?= htmlspecialchars($r['kelas_user']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($r['nama_tema']): ?>
+                                            <span><?= htmlspecialchars($r['nama_tema']); ?></span><br>
+                                            <small class="text-muted"><?= htmlspecialchars(trim($r['kelas_tema'] . ' · ' . $r['kelompok_tema'], ' · ')); ?></small>
+                                        <?php else: ?>
+                                            <span class="text-muted fst-italic">Tidak tercatat</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><small><?= date('d M Y H:i', strtotime($r['waktu_submit'])); ?></small></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mJwb<?= $r['id']; ?>">
+                                            <i class="bi bi-eye"></i> Lihat
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <?php
+            // ── MODAL — dirender DI LUAR tabel agar HTML valid ──
+            foreach ($semuaJawaban as $r):
+                $namaDisplay = $r['nama_lengkap'] ?: $r['nama_mahasiswa'];
+                $soalList    = ($r['tema_id'] && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
+            ?>
+            <div class="modal fade" id="mJwb<?= $r['id']; ?>" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header bg-dark text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-person-circle me-1"></i>
+                                <?= htmlspecialchars($namaDisplay); ?>
+                                <small class="fw-normal opacity-75 fs-6 ms-1">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <?php if ($r['nama_tema']): ?>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <strong>Tema:</strong> <?= htmlspecialchars($r['nama_tema']); ?>
+                                    <?php if ($r['kelas_tema'] || $r['kelompok_tema']): ?>
+                                        &nbsp;·&nbsp;<small><?= htmlspecialchars(trim('Kelas ' . $r['kelas_tema'] . ' · ' . $r['kelompok_tema'], ' · ')); ?></small>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php
+                            $adaJawaban = false;
+                            for ($i = 1; $i <= 17; $i++):
+                                $jawaban  = trim($r['jawaban_' . $i] ?? '');
+                                $soalTeks = $soalList[$i - 1] ?? null;
+                                if ($jawaban === '' && $soalTeks === null) continue;
+                                $adaJawaban = true;
+                            ?>
+                                <div class="jawaban-box">
+                                    <div class="soal-title">
+                                        <?= $soalTeks ? $i . '. ' . htmlspecialchars($soalTeks) : 'Pertanyaan ' . $i; ?>
+                                    </div>
+                                    <div><?= $jawaban !== '' ? nl2br(htmlspecialchars($jawaban)) : '<em class="text-muted">—</em>'; ?></div>
+                                </div>
+                            <?php endfor; ?>
+                            <?php if (!$adaJawaban): ?>
+                                <p class="text-muted text-center py-3">Belum ada jawaban yang diisi.</p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+
+        </div>
+
     </div><!-- end tab-content -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -577,7 +708,7 @@ if (isset($_POST['update_soal'])) {
     document.addEventListener('DOMContentLoaded', function() {
         var hash = window.location.hash.substring(1);
         var urlParams = new URLSearchParams(window.location.search);
-        if (hash && ['soal','tema','riwayat'].includes(hash)) {
+        if (hash && ['soal','tema','riwayat','jawaban'].includes(hash)) {
             var tabEl = document.querySelector('#' + hash + '-tab');
             if (tabEl) new bootstrap.Tab(tabEl).show();
         } else if (urlParams.get('tab') === 'riwayat') {
