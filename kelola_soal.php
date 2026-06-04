@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Cegah 'headers already sent' agar redirect header() selalu berhasil
 session_start();
 
 // Proteksi login (Sesuaikan dengan session admin Anda jika ada)
@@ -72,16 +73,10 @@ if (isset($_POST['add_soal'])) {
         $pesan = "<div class='alert alert-danger'>Pilih tema yang valid terlebih dahulu sebelum menambahkan soal.</div>";
     } else {
         $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
-        if ($temaIdExists) {
-            $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
-        } else {
-            // Kolom tema_id belum ada, tambahkan dulu sebelum insert
-            $conn->query("ALTER TABLE tb_daftar_soal ADD COLUMN tema_id INT NULL");
-            $temaIdExists = true;
-            $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
-        }
+        $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
         if ($insertSoal) {
-            header("Location: kelola_soal.php?theme={$active_theme_id}#soal");
+            ob_end_clean();
+            header("Location: kelola_soal.php?theme={$active_theme_id}");
             exit();
         } else {
             $pesan = "<div class='alert alert-danger'>Gagal menambahkan soal: " . htmlspecialchars($conn->error) . "</div>";
@@ -336,15 +331,19 @@ if (isset($_POST['update_soal'])) {
                     <form action="" method="POST" class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label">Kelas</label>
-                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: XII-A" required>
+                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: 6B" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Kelompok Tema</label>
-                            <input type="text" name="kelompok" class="form-control" placeholder="Contoh: Fiqih Bayi" required>
+                            <select name="kelompok" class="form-select" required>
+                                <option value="">-- Pilih Kelompok --</option>
+                                <option value="Masalah Utama">Masalah Utama</option>
+                                <option value="Masalah Kontemporer">Masalah Kontemporer</option>
+                            </select>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">Nama Tema</label>
-                            <input type="text" name="nama_tema" class="form-control" placeholder="Contoh: Analisis Bayi Tabung" required>
+                            <input type="text" name="nama_tema" class="form-control" placeholder="Contoh: Hukum Bayi Tabung" required>
                         </div>
                         <div class="col-12">
                             <button type="submit" name="add_tema" class="btn btn-success">Simpan Tema Baru</button>
@@ -401,7 +400,10 @@ if (isset($_POST['update_soal'])) {
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Kelompok</label>
-                                                <input type="text" name="kelompok" class="form-control" value="<?= htmlspecialchars($tema['kelompok'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                <select name="kelompok" class="form-select" required>
+                                                    <option value="Masalah Utama" <?= $tema['kelompok'] === 'Masalah Utama' ? 'selected' : ''; ?>>Masalah Utama</option>
+                                                    <option value="Masalah Kontemporer" <?= $tema['kelompok'] === 'Masalah Kontemporer' ? 'selected' : ''; ?>>Masalah Kontemporer</option>
+                                                </select>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Nama Tema</label>
