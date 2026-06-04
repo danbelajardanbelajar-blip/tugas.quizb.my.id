@@ -28,6 +28,20 @@ if ($checkTemaId && $checkTemaId->num_rows > 0) {
     $temaIdExists = true;
 }
 
+// Pastikan kolom id punya PRIMARY KEY dan AUTO_INCREMENT agar INSERT berfungsi
+$checkPK = $conn->query("SHOW KEYS FROM tb_daftar_soal WHERE Key_name = 'PRIMARY'");
+if (!$checkPK || $checkPK->num_rows === 0) {
+    // Tidak ada primary key: hapus data id=0 duplikat jika ada, lalu tambah PK + AUTO_INCREMENT
+    $conn->query("DELETE FROM tb_daftar_soal WHERE id = 0");
+    $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id)");
+} else {
+    // Sudah ada PK, pastikan ada AUTO_INCREMENT
+    $checkAI = $conn->query("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tb_daftar_soal' AND COLUMN_NAME = 'id' AND EXTRA LIKE '%auto_increment%'");
+    if (!$checkAI || $checkAI->num_rows === 0) {
+        $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT");
+    }
+}
+
 // Muat semua tema dari tabel tema_masalah
 $temaList = [];
 $temaMap = [];
@@ -294,23 +308,25 @@ if (isset($_POST['update_soal'])) {
                         }
 
                         if ($query_soal && $query_soal->num_rows > 0) {
+                            $soalNo = 1; // Penomoran urut tampilan (bukan ID database)
                             while ($s = $query_soal->fetch_assoc()) {
                                 $selectedTemaId = $temaIdExists ? ($s['tema_id'] ?? '') : '';
                                 $selectedTemaLabel = ($temaIdExists && $selectedTemaId && isset($temaMap[$selectedTemaId])) ? htmlspecialchars($temaMap[$selectedTemaId], ENT_QUOTES, 'UTF-8') : 'Tema belum terhubung';
                         ?>
                             <div class="mb-3 d-flex gap-2 align-items-start">
                                 <div class="flex-grow-1">
-                                    <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
+                                    <label class="form-label fw-bold">Pertanyaan Nomor <?= $soalNo; ?></label>
                                     <?php if ($temaIdExists) : ?>
                                         <input type="hidden" name="tema_id_<?= $s['id']; ?>" value="<?= htmlspecialchars($selectedTemaId, ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php endif; ?>
                                     <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
                                 </div>
                                 <div class="align-self-end">
-                                    <a href="?delete_soal=<?= $s['id']; ?>&theme=<?= $active_theme_id; ?>#soal" class="btn btn-danger btn-sm" onclick="return confirm('Hapus soal nomor <?= $s['id']; ?>?')">Delete</a>
+                                    <a href="?delete_soal=<?= $s['id']; ?>&theme=<?= $active_theme_id; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus soal nomor <?= $soalNo; ?>?')">Delete</a>
                                 </div>
                             </div>
                         <?php
+                            $soalNo++;
                             }
                         } else {
                             echo '<div class="alert alert-info">Pilih tema dari tab Kelola Tema untuk mulai mengedit soal.</div>';
