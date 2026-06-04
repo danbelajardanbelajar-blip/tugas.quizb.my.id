@@ -12,6 +12,9 @@ $user = 'quic1934_zenhkm';
 $pass = '03Maret1990';
 $db   = 'quic1934_tugas';
 
+// Nonaktifkan exception mode agar query gagal tidak crash halaman
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
     die("Koneksi Database Gagal: " . $conn->connect_error);
@@ -20,16 +23,20 @@ $conn->set_charset("utf8mb4");
 
 $pesan = "";
 
-// Pastikan AUTO_INCREMENT pada tb_daftar_soal
-$checkPK = $conn->query("SHOW KEYS FROM tb_daftar_soal WHERE Key_name = 'PRIMARY'");
-if (!$checkPK || $checkPK->num_rows === 0) {
-    $conn->query("DELETE FROM tb_daftar_soal WHERE id = 0");
-    $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id)");
-} else {
-    $checkAI = $conn->query("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tb_daftar_soal' AND COLUMN_NAME = 'id' AND EXTRA LIKE '%auto_increment%'");
-    if (!$checkAI || $checkAI->num_rows === 0) {
-        $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT");
+// Pastikan AUTO_INCREMENT pada tb_daftar_soal (dibungkus try-catch agar aman)
+try {
+    $checkPK = $conn->query("SHOW KEYS FROM tb_daftar_soal WHERE Key_name = 'PRIMARY'");
+    if (!$checkPK || $checkPK->num_rows === 0) {
+        $conn->query("DELETE FROM tb_daftar_soal WHERE id = 0");
+        $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id)");
+    } else {
+        $checkAI = $conn->query("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tb_daftar_soal' AND COLUMN_NAME = 'id' AND EXTRA LIKE '%auto_increment%'");
+        if (!$checkAI || $checkAI->num_rows === 0) {
+            $conn->query("ALTER TABLE tb_daftar_soal MODIFY id INT(11) NOT NULL AUTO_INCREMENT");
+        }
     }
+} catch (Exception $e) {
+    // Abaikan error ALTER TABLE, tidak kritis
 }
 
 // Muat semua tema
