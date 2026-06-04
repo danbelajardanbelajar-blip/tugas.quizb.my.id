@@ -31,6 +31,12 @@ if ($checkTemaId && $checkTemaId->num_rows > 0) {
     $temaIdExists = true;
 }
 
+// Pastikan kolom tema_id ada di tb_soal (untuk merekam tema mahasiswa)
+$checkTemaIdSoal = $conn->query("SHOW COLUMNS FROM tb_soal LIKE 'tema_id'");
+if (!$checkTemaIdSoal || $checkTemaIdSoal->num_rows === 0) {
+    $conn->query("ALTER TABLE tb_soal ADD COLUMN tema_id INT(11) DEFAULT NULL AFTER nama_mahasiswa");
+}
+
 // Pastikan kolom id punya PRIMARY KEY dan AUTO_INCREMENT agar INSERT berfungsi
 $checkPK = $conn->query("SHOW KEYS FROM tb_daftar_soal WHERE Key_name = 'PRIMARY'");
 if (!$checkPK || $checkPK->num_rows === 0) {
@@ -55,6 +61,15 @@ if (!$temaRes) {
     while ($temaRow = $temaRes->fetch_assoc()) {
         $temaList[] = $temaRow;
         $temaMap[$temaRow['id_tema']] = $temaRow['kelas'] . ' | ' . $temaRow['kelompok'] . ' | ' . $temaRow['nama_tema'];
+    }
+}
+
+// Pre-fetch semua soal dikelompokkan per tema (untuk dipakai di modal jawaban)
+$soalPerTema = [];
+$resSoalAll = $conn->query("SELECT tema_id, teks_soal FROM tb_daftar_soal ORDER BY tema_id ASC, id ASC");
+if ($resSoalAll) {
+    while ($rowSoal = $resSoalAll->fetch_assoc()) {
+        $soalPerTema[$rowSoal['tema_id']][] = $rowSoal['teks_soal'];
     }
 }
 
@@ -187,6 +202,7 @@ if (isset($_POST['update_soal'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Soal & Jawaban Mahasiswa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { background-color: #f8f9fa; }
         .jawaban-box { background: #f1f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #3498db;}
@@ -232,6 +248,9 @@ if (isset($_POST['update_soal'])) {
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-success" id="tema-tab" data-bs-toggle="tab" data-bs-target="#tema" type="button" role="tab"><i class="bi bi-tags"></i> Kelola Tema</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-warning" id="riwayat-tab" data-bs-toggle="tab" data-bs-target="#riwayat" type="button" role="tab"><i class="bi bi-clock-history"></i> Riwayat Tugas</button>
+        </li>
     </ul>
 
     <div class="tab-content" id="myTabContent">
@@ -247,6 +266,7 @@ if (isset($_POST['update_soal'])) {
                                 <tr>
                                     <th class="text-center">No</th>
                                     <th>Nama / NIM</th>
+                                    <th>Tema</th>
                                     <th>Waktu Terakhir Disimpan</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
@@ -255,9 +275,11 @@ if (isset($_POST['update_soal'])) {
                                 <?php
                                 $no = 1;
                                 $query_jawaban = $conn->query("
-                                    SELECT ts.*, u.nama_lengkap
+                                    SELECT ts.*, u.nama_lengkap, u.kelas AS kelas_user,
+                                           tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
                                     FROM tb_soal ts
                                     LEFT JOIN user u ON u.username = ts.nama_mahasiswa
+                                    LEFT JOIN tema_masalah tm ON tm.id_tema = ts.tema_id
                                     ORDER BY ts.waktu_submit DESC
                                 ");
 
@@ -272,11 +294,28 @@ if (isset($_POST['update_soal'])) {
                                         $r['nama_lengkap'] = $r['nama_lengkap'] ?? $r['nama_mahasiswa'];
                                 ?>
 
+                                <?php
+                                    $temaLabel = $r['nama_tema']
+                                        ? htmlspecialchars($r['nama_tema'])
+                                        : '<span class="text-muted fst-italic">Tidak tercatat</span>';
+                                    $temaKelompok = $r['kelompok_tema'] ?? '';
+                                    $temaKelas = $r['kelas_tema'] ?? '';
+                                    $soalList = ($r['tema_id'] && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
+                                ?>
                                 <tr>
                                     <td class="text-center"><?= $no++; ?></td>
                                     <td>
                                         <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?></span><br>
                                         <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
+                                        <?php if ($r['kelas_user']): ?>
+                                            <small class="badge bg-secondary"><?= htmlspecialchars($r['kelas_user']); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?= $temaLabel; ?>
+                                        <?php if ($temaKelompok || $temaKelas): ?>
+                                            <br><small class="text-muted"><?= htmlspecialchars(trim("$temaKelas $temaKelompok", " ")); ?></small>
+                                        <?php endif; ?>
                                     </td>
                                     <td><?= date('d M Y - H:i', strtotime($r['waktu_submit'])); ?></td>
                                     <td class="text-center">
@@ -292,14 +331,37 @@ if (isset($_POST['update_soal'])) {
                                     <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title">Jawaban: <?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?> <small class="fw-normal opacity-75">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small></h5>
+                                                <h5 class="modal-title">
+                                                    Jawaban: <?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?>
+                                                    <small class="fw-normal opacity-75">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small>
+                                                </h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <?php for($i=1; $i<=17; $i++): ?>
+                                                <?php if ($r['nama_tema']): ?>
+                                                    <div class="alert alert-info py-2 mb-3">
+                                                        <strong>Tema:</strong> <?= htmlspecialchars($r['nama_tema']); ?>
+                                                        <?php if ($temaKelompok || $temaKelas): ?>
+                                                            &nbsp;·&nbsp;<small><?= htmlspecialchars(trim("Kelas $temaKelas · $temaKelompok")); ?></small>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <?php
+                                                // Tampilkan jawaban dipasangkan dengan teks soal asli jika tersedia
+                                                for ($i = 1; $i <= 17; $i++):
+                                                    $jawaban = $r['jawaban_' . $i] ?? '';
+                                                    if ($jawaban === '' && empty($soalList)) continue;
+                                                    $soalTeks = isset($soalList[$i - 1]) ? $soalList[$i - 1] : null;
+                                                ?>
                                                     <div class="jawaban-box">
-                                                        <div class="soal-title">Soal <?= $i; ?></div>
-                                                        <div><?= nl2br(htmlspecialchars($r['jawaban_'.$i] ?? '-')); ?></div>
+                                                        <div class="soal-title">
+                                                            <?php if ($soalTeks): ?>
+                                                                <?= $i ?>. <?= htmlspecialchars($soalTeks); ?>
+                                                            <?php else: ?>
+                                                                Pertanyaan <?= $i; ?>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div><?= $jawaban !== '' ? nl2br(htmlspecialchars($jawaban)) : '<em class="text-muted">Tidak dijawab</em>'; ?></div>
                                                     </div>
                                                 <?php endfor; ?>
                                             </div>
@@ -312,7 +374,7 @@ if (isset($_POST['update_soal'])) {
                                 <?php 
                                     }
                                 } else {
-                                    echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>";
+                                    echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>";
                                 }
                                 ?>
                             </tbody>
@@ -491,6 +553,133 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
+        <!-- TAB 4: RIWAYAT TUGAS USER -->
+        <div class="tab-pane fade" id="riwayat" role="tabpanel">
+            <div class="card shadow-sm border-warning mb-3">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="bi bi-clock-history"></i> Riwayat Pengumpulan Tugas (File Upload)
+                </div>
+                <div class="card-body p-2">
+                    <!-- Filter -->
+                    <form method="GET" class="row g-2 mb-3">
+                        <input type="hidden" name="tab" value="riwayat">
+                        <div class="col-md-3">
+                            <select name="f_kelas" class="form-select form-select-sm">
+                                <option value="">-- Semua Kelas --</option>
+                                <?php
+                                $kelasOpts = $conn->query("SELECT DISTINCT kelas FROM user WHERE kelas IS NOT NULL AND kelas != '' ORDER BY kelas ASC");
+                                $fKelas = $_GET['f_kelas'] ?? '';
+                                if ($kelasOpts) while ($ko = $kelasOpts->fetch_assoc()):
+                                ?>
+                                <option value="<?= htmlspecialchars($ko['kelas']); ?>" <?= $fKelas === $ko['kelas'] ? 'selected' : ''; ?>><?= htmlspecialchars($ko['kelas']); ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="f_type" class="form-select form-select-sm">
+                                <option value="">-- Semua Tipe --</option>
+                                <?php
+                                $typeOpts = $conn->query("SELECT DISTINCT type_tugas FROM tugas WHERE type_tugas IS NOT NULL ORDER BY type_tugas ASC");
+                                $fType = $_GET['f_type'] ?? '';
+                                if ($typeOpts) while ($to = $typeOpts->fetch_assoc()):
+                                ?>
+                                <option value="<?= htmlspecialchars($to['type_tugas']); ?>" <?= $fType === $to['type_tugas'] ? 'selected' : ''; ?>><?= htmlspecialchars($to['type_tugas']); ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="f_search" class="form-control form-control-sm" placeholder="Cari nama / NIM / tema..." value="<?= htmlspecialchars($_GET['f_search'] ?? ''); ?>">
+                        </div>
+                        <div class="col-md-2 d-flex gap-1">
+                            <button type="submit" class="btn btn-warning btn-sm w-100">Filter</button>
+                            <a href="kelola_soal.php#riwayat" class="btn btn-outline-secondary btn-sm">Reset</a>
+                        </div>
+                    </form>
+
+                    <?php
+                    // Build query riwayat tugas
+                    $fKelas  = mysqli_real_escape_string($conn, $_GET['f_kelas'] ?? '');
+                    $fType   = mysqli_real_escape_string($conn, $_GET['f_type'] ?? '');
+                    $fSearch = mysqli_real_escape_string($conn, $_GET['f_search'] ?? '');
+
+                    $whereRiwayat = [];
+                    if ($fKelas !== '')  $whereRiwayat[] = "u.kelas = '$fKelas'";
+                    if ($fType !== '')   $whereRiwayat[] = "t.type_tugas = '$fType'";
+                    if ($fSearch !== '') $whereRiwayat[] = "(u.nama_lengkap LIKE '%$fSearch%' OR t.username LIKE '%$fSearch%' OR t.tema_masalah LIKE '%$fSearch%')";
+                    $whereSQL = $whereRiwayat ? 'WHERE ' . implode(' AND ', $whereRiwayat) : '';
+
+                    $queryRiwayat = $conn->query("
+                        SELECT t.*, u.nama_lengkap, u.kelas AS kelas_user
+                        FROM tugas t
+                        LEFT JOIN user u ON u.username = t.username
+                        $whereSQL
+                        ORDER BY t.stamp DESC
+                    ");
+                    ?>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">No</th>
+                                    <th>Nama / NIM</th>
+                                    <th>Kelas</th>
+                                    <th>Tema Masalah</th>
+                                    <th>Tipe Tugas</th>
+                                    <th>File</th>
+                                    <th>Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            if ($queryRiwayat && $queryRiwayat->num_rows > 0):
+                                $noR = 1;
+                                while ($rw = $queryRiwayat->fetch_assoc()):
+                                    $namaLengkap = $rw['nama_lengkap'] ?: $rw['username'];
+                                    $fileExt = strtolower(pathinfo($rw['file_upload'], PATHINFO_EXTENSION));
+                                    $badgeClass = match($fileExt) {
+                                        'pdf' => 'bg-danger',
+                                        'docx', 'doc' => 'bg-primary',
+                                        'xlsx', 'xls' => 'bg-success',
+                                        'png', 'jpg', 'jpeg' => 'bg-info',
+                                        default => 'bg-secondary'
+                                    };
+                            ?>
+                                <tr>
+                                    <td class="text-center"><?= $noR++; ?></td>
+                                    <td>
+                                        <span class="fw-bold"><?= htmlspecialchars($namaLengkap); ?></span><br>
+                                        <small class="text-muted"><?= htmlspecialchars($rw['username']); ?></small>
+                                    </td>
+                                    <td><small><?= htmlspecialchars($rw['kelas_user'] ?? $rw['kelas'] ?? '-'); ?></small></td>
+                                    <td><small><?= htmlspecialchars($rw['tema_masalah'] ?? '-'); ?></small></td>
+                                    <td><span class="badge bg-secondary"><?= htmlspecialchars($rw['type_tugas'] ?? '-'); ?></span></td>
+                                    <td>
+                                        <span class="badge <?= $badgeClass; ?>"><?= strtoupper($fileExt); ?></span>
+                                        <a href="uploads/<?= htmlspecialchars($rw['file_upload']); ?>" target="_blank" class="ms-1 text-decoration-none small">
+                                            <?= htmlspecialchars(substr($rw['file_upload'], 11)); // hapus prefix timestamp ?>
+                                        </a>
+                                    </td>
+                                    <td><small><?= date('d M Y H:i', strtotime($rw['stamp'])); ?></small></td>
+                                </tr>
+                            <?php
+                                endwhile;
+                            else:
+                            ?>
+                                <tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data riwayat tugas.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php if ($queryRiwayat): ?>
+                        <div class="text-end text-muted small mt-2 pe-2">Total: <?= $queryRiwayat->num_rows; ?> entri</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end tab-content -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ============================================================
@@ -527,16 +716,16 @@ if (isset($_POST['update_soal'])) {
 
     document.addEventListener('DOMContentLoaded', function() {
         var hash = window.location.hash.substring(1);
-        if (hash) {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (hash && ['jawaban','soal','tema','riwayat'].includes(hash)) {
             var tabEl = document.querySelector('#' + hash + '-tab');
-            if (tabEl) {
-                new bootstrap.Tab(tabEl).show();
-            }
-        } else if (window.location.search.indexOf('theme=') !== -1) {
+            if (tabEl) new bootstrap.Tab(tabEl).show();
+        } else if (urlParams.get('tab') === 'riwayat') {
+            var tabEl = document.querySelector('#riwayat-tab');
+            if (tabEl) new bootstrap.Tab(tabEl).show();
+        } else if (urlParams.get('theme')) {
             var tabEl = document.querySelector('#soal-tab');
-            if (tabEl) {
-                new bootstrap.Tab(tabEl).show();
-            }
+            if (tabEl) new bootstrap.Tab(tabEl).show();
         }
     });
 </script>
