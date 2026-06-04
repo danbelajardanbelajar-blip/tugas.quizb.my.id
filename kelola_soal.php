@@ -38,6 +38,9 @@ if ($temaRes) {
     }
 }
 
+$active_theme_id = isset($_GET['theme']) && intval($_GET['theme']) > 0 ? intval($_GET['theme']) : null;
+$active_theme_label = $active_theme_id && isset($temaMap[$active_theme_id]) ? $temaMap[$active_theme_id] : null;
+
 // PROSES HAPUS JAWABAN MAHASISWA
 if (isset($_GET['delete_jawaban'])) {
     $deleteId = intval($_GET['delete_jawaban']);
@@ -60,13 +63,17 @@ if (isset($_GET['delete_soal'])) {
 
 // PROSES TAMBAH SOAL
 if (isset($_POST['add_soal'])) {
-    $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
-    $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal" . ($temaIdExists ? ", tema_id" : "") . ") VALUES ('{$defaultText}'" . ($temaIdExists ? ", NULL" : "") . ")");
-    if ($insertSoal) {
-        header("Location: kelola_soal.php#soal");
-        exit();
+    if (!$active_theme_id) {
+        $pesan = "<div class='alert alert-danger'>Pilih tema terlebih dahulu sebelum menambahkan soal.</div>";
     } else {
-        $pesan = "<div class='alert alert-danger'>Gagal menambahkan soal: " . htmlspecialchars($conn->error) . "</div>";
+        $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
+        $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
+        if ($insertSoal) {
+            header("Location: kelola_soal.php?theme={$active_theme_id}#soal");
+            exit();
+        } else {
+            $pesan = "<div class='alert alert-danger'>Gagal menambahkan soal: " . htmlspecialchars($conn->error) . "</div>";
+        }
     }
 }
 
@@ -120,25 +127,25 @@ if (isset($_GET['delete_tema'])) {
 // PROSES UPDATE SOAL
 if (isset($_POST['update_soal'])) {
     $berhasil = true;
-    for ($i = 1; $i <= 17; $i++) {
-        $teks_baru = mysqli_real_escape_string($conn, $_POST['soal_' . $i]);
-        $tema_id = $temaIdExists && isset($_POST['tema_id_' . $i]) ? intval($_POST['tema_id_' . $i]) : null;
 
-        if ($temaIdExists) {
-            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru', tema_id = " . ($tema_id !== null ? $tema_id : 'NULL') . " WHERE id = $i";
-        } else {
-            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $i";
+    if ($active_theme_id) {
+        $query_soal_update = $conn->query("SELECT id FROM tb_daftar_soal WHERE tema_id = {$active_theme_id} ORDER BY id ASC");
+        while ($soal_update = $query_soal_update->fetch_assoc()) {
+            $soalId = intval($soal_update['id']);
+            $teks_baru = mysqli_real_escape_string($conn, $_POST['soal_' . $soalId] ?? '');
+            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $soalId";
+            if (!$conn->query($query_update)) {
+                $berhasil = false;
+            }
         }
-
-        if (!$conn->query($query_update)) {
-            $berhasil = false;
-        }
+    } else {
+        $berhasil = false;
     }
 
     if ($berhasil) {
         $pesan = "<div class='alert alert-success alert-dismissible fade show'>Daftar soal berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     } else {
-        $pesan = "<div class='alert alert-danger'>Terjadi kesalahan saat mengupdate soal.</div>";
+        $pesan = "<div class='alert alert-danger'>Terjadi kesalahan saat mengupdate soal. Pastikan Anda memilih tema yang benar.</div>";
     }
 }
 ?>
@@ -172,9 +179,11 @@ if (isset($_POST['update_soal'])) {
         <li class="nav-item" role="presentation">
             <button class="nav-link active fw-bold" id="jawaban-tab" data-bs-toggle="tab" data-bs-target="#jawaban" type="button" role="tab">Daftar Jawaban Mahasiswa</button>
         </li>
+        <?php if ($active_theme_id && $active_theme_label) : ?>
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-primary" id="soal-tab" data-bs-toggle="tab" data-bs-target="#soal" type="button" role="tab"><i class="bi bi-pencil-square"></i> Edit Soal</button>
         </li>
+        <?php endif; ?>
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold text-success" id="tema-tab" data-bs-toggle="tab" data-bs-target="#tema" type="button" role="tab"><i class="bi bi-tags"></i> Kelola Tema</button>
         </li>
@@ -255,37 +264,47 @@ if (isset($_POST['update_soal'])) {
         <div class="tab-pane fade" id="soal" role="tabpanel">
             <div class="card shadow-sm border-primary">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <span class="font-weight-bold">Edit Soal</span>
-                    <form action="" method="POST" class="mb-0">
+                    <span class="font-weight-bold">Edit Soal<?php if ($active_theme_label) echo ' - ' . htmlspecialchars($active_theme_label, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <?php if ($active_theme_id) : ?>
+                    <form action="?theme=<?= $active_theme_id; ?>#soal" method="POST" class="mb-0">
                         <button type="submit" name="add_soal" class="btn btn-light btn-sm">Tambahkan Soal</button>
                     </form>
+                    <?php endif; ?>
                 </div>
                 <div class="card-body">
-                    <form action="" method="POST">
+                    <form action="?theme=<?= $active_theme_id; ?>#soal" method="POST">
                         <?php
-                        $query_soal = $conn->query("SELECT * FROM tb_daftar_soal ORDER BY id ASC");
-                        while ($s = $query_soal->fetch_assoc()) {
-                            $selectedTemaId = $temaIdExists ? ($s['tema_id'] ?? '') : '';
-                            $selectedTemaLabel = ($temaIdExists && $selectedTemaId && isset($temaMap[$selectedTemaId])) ? htmlspecialchars($temaMap[$selectedTemaId], ENT_QUOTES, 'UTF-8') : 'Tema belum terhubung';
+                        if ($active_theme_id) {
+                            $query_soal = $conn->query("SELECT * FROM tb_daftar_soal WHERE tema_id = {$active_theme_id} ORDER BY id ASC");
+                        } else {
+                            $query_soal = false;
+                        }
+
+                        if ($query_soal && $query_soal->num_rows > 0) {
+                            while ($s = $query_soal->fetch_assoc()) {
+                                $selectedTemaId = $temaIdExists ? ($s['tema_id'] ?? '') : '';
+                                $selectedTemaLabel = ($temaIdExists && $selectedTemaId && isset($temaMap[$selectedTemaId])) ? htmlspecialchars($temaMap[$selectedTemaId], ENT_QUOTES, 'UTF-8') : 'Tema belum terhubung';
                         ?>
                             <div class="mb-3 d-flex gap-2 align-items-start">
                                 <div class="flex-grow-1">
                                     <label class="form-label fw-bold">Pertanyaan Nomor <?= $s['id']; ?></label>
                                     <?php if ($temaIdExists) : ?>
-                                        <div class="mb-2">
-                                            <span class="badge bg-info text-dark">Tema: <?= $selectedTemaLabel; ?></span>
-                                        </div>
                                         <input type="hidden" name="tema_id_<?= $s['id']; ?>" value="<?= htmlspecialchars($selectedTemaId, ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php endif; ?>
                                     <textarea name="soal_<?= $s['id']; ?>" class="form-control" rows="2" required><?= htmlspecialchars($s['teks_soal']); ?></textarea>
                                 </div>
                                 <div class="align-self-end">
-                                    <a href="?delete_soal=<?= $s['id']; ?>#soal" class="btn btn-danger btn-sm" onclick="return confirm('Hapus soal nomor <?= $s['id']; ?>?')">Delete</a>
+                                    <a href="?delete_soal=<?= $s['id']; ?>&theme=<?= $active_theme_id; ?>#soal" class="btn btn-danger btn-sm" onclick="return confirm('Hapus soal nomor <?= $s['id']; ?>?')">Delete</a>
                                 </div>
                             </div>
-                        <?php } ?>
+                        <?php
+                            }
+                        } else {
+                            echo '<div class="alert alert-info">Pilih tema dari tab Kelola Tema untuk mulai mengedit soal.</div>';
+                        }
+                        ?>
                         <hr>
-                        <button type="submit" name="update_soal" class="btn btn-success w-100 py-2 fw-bold">Simpan Perubahan Soal</button>
+                        <button type="submit" name="update_soal" class="btn btn-success w-100 py-2 fw-bold" <?= $active_theme_id ? '' : 'disabled'; ?>>Simpan Perubahan Soal</button>
                     </form>
                 </div>
             </div>
@@ -350,7 +369,7 @@ if (isset($_POST['update_soal'])) {
                                             <input type="hidden" name="nama_tema" value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <button type="button" class="btn btn-sm btn-warning" onclick="toggleEdit(<?= $tema['id_tema']; ?>)">Edit</button>
                                         </form>
-                                        <button type="button" class="btn btn-sm btn-info" onclick="showTab('soal')">Edit Soal</button>
+                                        <a href="kelola_soal.php?theme=<?= $tema['id_tema']; ?>#soal" class="btn btn-sm btn-info">Edit Soal</a>
                                         <a href="?delete_tema=<?= $tema['id_tema']; ?>#tema" class="btn btn-sm btn-danger" onclick="return confirm('Hapus tema ini?')">Hapus</a>
                                     </td>
                                 </tr>
@@ -409,9 +428,14 @@ if (isset($_POST['update_soal'])) {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.location.hash) {
-            var hash = window.location.hash.substring(1);
+        var hash = window.location.hash.substring(1);
+        if (hash) {
             var tabEl = document.querySelector('#' + hash + '-tab');
+            if (tabEl) {
+                new bootstrap.Tab(tabEl).show();
+            }
+        } else if (window.location.search.indexOf('theme=') !== -1) {
+            var tabEl = document.querySelector('#soal-tab');
             if (tabEl) {
                 new bootstrap.Tab(tabEl).show();
             }
