@@ -234,13 +234,21 @@ if (isset($_POST['update_soal'])) {
                             <tbody>
                                 <?php
                                 $no = 1;
-                                $query_jawaban = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
+                                $query_jawaban = $conn->query("
+                                    SELECT ts.*, u.nama_lengkap
+                                    FROM tb_soal ts
+                                    LEFT JOIN user u ON u.username = ts.nama_mahasiswa
+                                    ORDER BY ts.waktu_submit DESC
+                                ");
                                 if ($query_jawaban->num_rows > 0) {
                                     while ($r = $query_jawaban->fetch_assoc()) {
                                 ?>
                                 <tr>
                                     <td class="text-center"><?= $no++; ?></td>
-                                    <td class="fw-bold"><?= htmlspecialchars($r['nama_mahasiswa']); ?></td>
+                                    <td>
+                                        <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?></span><br>
+                                        <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
+                                    </td>
                                     <td><?= date('d M Y - H:i', strtotime($r['waktu_submit'])); ?></td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
@@ -255,7 +263,7 @@ if (isset($_POST['update_soal'])) {
                                     <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title">Jawaban: <?= htmlspecialchars($r['nama_mahasiswa']); ?></h5>
+                                                <h5 class="modal-title">Jawaban: <?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?> <small class="fw-normal opacity-75">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small></h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
