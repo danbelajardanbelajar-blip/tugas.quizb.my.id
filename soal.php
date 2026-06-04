@@ -165,6 +165,35 @@ if ($ambil_soal) {
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .user-info { background: #e8f4f8; padding: 10px 15px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #3498db; font-weight: bold;}
+
+        /* ====== DUKUNGAN TEKS ARAB (RTL) ====== */
+        /* Label soal: auto arah berdasarkan konten */
+        label {
+            unicode-bidi: plaintext;
+            text-align: start;
+        }
+        /* Textarea: arah tulisan otomatis */
+        textarea {
+            unicode-bidi: plaintext;
+            text-align: start;
+        }
+        /* Jika textarea mengandung teks Arab (class ditambah JS) */
+        textarea.rtl-mode {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', Arial, sans-serif;
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+        /* Label soal yang mengandung Arab */
+        label.has-arabic {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', Arial, sans-serif;
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+        /* ======================================= */
     </style>
 </head>
 <body>
@@ -211,6 +240,35 @@ if ($ambil_soal) {
 <!-- Script AJAX untuk Silent Autosave -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        // ============================================================
+        // DUKUNGAN TEKS ARAB - AUTO DETEKSI RTL
+        // ============================================================
+        const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+        function applyRTLToTextarea(textarea) {
+            if (arabicRegex.test(textarea.value)) {
+                textarea.classList.add('rtl-mode');
+            } else {
+                textarea.classList.remove('rtl-mode');
+            }
+        }
+
+        // Cek semua textarea saat halaman dimuat (untuk jawaban yang sudah tersimpan)
+        document.querySelectorAll('.soal-textarea').forEach(function(textarea) {
+            applyRTLToTextarea(textarea);
+            // Auto-deteksi saat mengetik
+            textarea.addEventListener('input', function() {
+                applyRTLToTextarea(this);
+            });
+        });
+
+        // Cek semua label soal yang mengandung teks Arab
+        document.querySelectorAll('label').forEach(function(label) {
+            if (arabicRegex.test(label.textContent)) {
+                label.classList.add('has-arabic');
+            }
+        });
 
         // ============================================================
         // PROTEKSI COPY-PASTE MENYELURUH (Desktop & HP)

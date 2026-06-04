@@ -186,6 +186,21 @@ if (isset($_POST['update_soal'])) {
         body { background-color: #f8f9fa; }
         .jawaban-box { background: #f1f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #3498db;}
         .soal-title { font-weight: bold; color: #2c3e50; font-size: 0.9em;}
+
+        /* ====== DUKUNGAN TEKS ARAB (RTL) ====== */
+        .jawaban-box div {
+            unicode-bidi: plaintext;
+            text-align: start;
+        }
+        .jawaban-box div:has-arabic,
+        .jawaban-arabic {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', Arial, sans-serif;
+            font-size: 1.1em;
+            line-height: 1.9;
+        }
+        /* ======================================= */
     </style>
 </head>
 <body>
@@ -452,11 +467,26 @@ if (isset($_POST['update_soal'])) {
             </div>
         </div>
 
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // ============================================================
+    // DUKUNGAN TEKS ARAB - AUTO DETEKSI RTL (di modal jawaban)
+    // ============================================================
+    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+    function applyArabicRTL() {
+        document.querySelectorAll('.jawaban-box div:not(.soal-title)').forEach(function(el) {
+            if (arabicRegex.test(el.textContent)) {
+                el.classList.add('jawaban-arabic');
+            }
+        });
+    }
+
+    // Jalankan saat modal dibuka
+    document.addEventListener('show.bs.modal', function() {
+        setTimeout(applyArabicRTL, 50);
+    });
+
     function toggleEdit(id) {
         var row = document.getElementById('editRow' + id);
         if (!row) return;
