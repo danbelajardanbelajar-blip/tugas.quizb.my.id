@@ -274,6 +274,8 @@ if (isset($_POST['update_soal'])) {
                             <tbody>
                                 <?php
                                 $no = 1;
+                                $modalBuffer = ''; // Kumpulkan modal di sini, output SETELAH tabel tutup
+
                                 $query_jawaban = $conn->query("
                                     SELECT ts.*, u.nama_lengkap, u.kelas AS kelas_user,
                                            tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
@@ -283,29 +285,24 @@ if (isset($_POST['update_soal'])) {
                                     ORDER BY ts.waktu_submit DESC
                                 ");
 
-                                // Jika query gagal, fallback tanpa JOIN
                                 if ($query_jawaban === false) {
-                                    $pesan = "<div class='alert alert-danger'>Database Error: " . htmlspecialchars($conn->error) . "</div>";
                                     $query_jawaban = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
                                 }
 
                                 if ($query_jawaban && $query_jawaban->num_rows > 0) {
                                     while ($r = $query_jawaban->fetch_assoc()) {
                                         $r['nama_lengkap'] = $r['nama_lengkap'] ?? $r['nama_mahasiswa'];
-                                ?>
-
-                                <?php
-                                    $temaLabel = $r['nama_tema']
-                                        ? htmlspecialchars($r['nama_tema'])
-                                        : '<span class="text-muted fst-italic">Tidak tercatat</span>';
-                                    $temaKelompok = $r['kelompok_tema'] ?? '';
-                                    $temaKelas = $r['kelas_tema'] ?? '';
-                                    $soalList = ($r['tema_id'] && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
+                                        $temaLabel    = $r['nama_tema']
+                                            ? htmlspecialchars($r['nama_tema'])
+                                            : '<span class="text-muted fst-italic">Tidak tercatat</span>';
+                                        $temaKelompok = $r['kelompok_tema'] ?? '';
+                                        $temaKelas    = $r['kelas_tema'] ?? '';
+                                        $soalList     = ($r['tema_id'] && isset($soalPerTema[$r['tema_id']])) ? $soalPerTema[$r['tema_id']] : [];
                                 ?>
                                 <tr>
                                     <td class="text-center"><?= $no++; ?></td>
                                     <td>
-                                        <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?></span><br>
+                                        <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap']); ?></span><br>
                                         <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
                                         <?php if ($r['kelas_user']): ?>
                                             <small class="badge bg-secondary"><?= htmlspecialchars($r['kelas_user']); ?></small>
@@ -314,25 +311,27 @@ if (isset($_POST['update_soal'])) {
                                     <td>
                                         <?= $temaLabel; ?>
                                         <?php if ($temaKelompok || $temaKelas): ?>
-                                            <br><small class="text-muted"><?= htmlspecialchars(trim("$temaKelas $temaKelompok", " ")); ?></small>
+                                            <br><small class="text-muted"><?= htmlspecialchars("$temaKelas $temaKelompok"); ?></small>
                                         <?php endif; ?>
                                     </td>
                                     <td><?= date('d M Y - H:i', strtotime($r['waktu_submit'])); ?></td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
                                             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalJawaban<?= $r['id']; ?>">Lihat Jawaban</button>
-                                            <a href="?delete_jawaban=<?= $r['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus semua jawaban <?= htmlspecialchars($r['nama_mahasiswa'], ENT_QUOTES, 'UTF-8'); ?>?')">Hapus</a>
+                                            <a href="?delete_jawaban=<?= $r['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus jawaban <?= htmlspecialchars($r['nama_mahasiswa'], ENT_QUOTES, 'UTF-8'); ?>?')">Hapus</a>
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Modal Detail Jawaban untuk masing-masing Mahasiswa -->
+                                <?php
+                                        // Bangun HTML modal dan simpan ke buffer
+                                        ob_start();
+                                        ?>
                                 <div class="modal fade" id="modalJawaban<?= $r['id']; ?>" tabindex="-1">
                                     <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
                                                 <h5 class="modal-title">
-                                                    Jawaban: <?= htmlspecialchars($r['nama_lengkap'] ?? $r['nama_mahasiswa']); ?>
+                                                    <?= htmlspecialchars($r['nama_lengkap']); ?>
                                                     <small class="fw-normal opacity-75">(<?= htmlspecialchars($r['nama_mahasiswa']); ?>)</small>
                                                 </h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -342,24 +341,18 @@ if (isset($_POST['update_soal'])) {
                                                     <div class="alert alert-info py-2 mb-3">
                                                         <strong>Tema:</strong> <?= htmlspecialchars($r['nama_tema']); ?>
                                                         <?php if ($temaKelompok || $temaKelas): ?>
-                                                            &nbsp;·&nbsp;<small><?= htmlspecialchars(trim("Kelas $temaKelas · $temaKelompok")); ?></small>
+                                                            &nbsp;·&nbsp;<small><?= htmlspecialchars("Kelas $temaKelas · $temaKelompok"); ?></small>
                                                         <?php endif; ?>
                                                     </div>
                                                 <?php endif; ?>
-                                                <?php
-                                                // Tampilkan jawaban dipasangkan dengan teks soal asli jika tersedia
-                                                for ($i = 1; $i <= 17; $i++):
-                                                    $jawaban = $r['jawaban_' . $i] ?? '';
-                                                    if ($jawaban === '' && empty($soalList)) continue;
-                                                    $soalTeks = isset($soalList[$i - 1]) ? $soalList[$i - 1] : null;
+                                                <?php for ($i = 1; $i <= 17; $i++):
+                                                    $jawaban  = $r['jawaban_' . $i] ?? '';
+                                                    $soalTeks = $soalList[$i - 1] ?? null;
+                                                    if ($jawaban === '' && $soalTeks === null) continue;
                                                 ?>
                                                     <div class="jawaban-box">
                                                         <div class="soal-title">
-                                                            <?php if ($soalTeks): ?>
-                                                                <?= $i ?>. <?= htmlspecialchars($soalTeks); ?>
-                                                            <?php else: ?>
-                                                                Pertanyaan <?= $i; ?>
-                                                            <?php endif; ?>
+                                                            <?= $soalTeks ? $i . '. ' . htmlspecialchars($soalTeks) : 'Pertanyaan ' . $i; ?>
                                                         </div>
                                                         <div><?= $jawaban !== '' ? nl2br(htmlspecialchars($jawaban)) : '<em class="text-muted">Tidak dijawab</em>'; ?></div>
                                                     </div>
@@ -371,7 +364,8 @@ if (isset($_POST['update_soal'])) {
                                         </div>
                                     </div>
                                 </div>
-                                <?php 
+                                <?php
+                                        $modalBuffer .= ob_get_clean();
                                     }
                                 } else {
                                     echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>";
@@ -382,6 +376,8 @@ if (isset($_POST['update_soal'])) {
                     </div>
                 </div>
             </div>
+            <!-- Modal-modal jawaban diletakkan di LUAR tabel agar HTML valid -->
+            <?= $modalBuffer; ?>
         </div>
 
         <!-- TAB 2: EDIT SOAL -->
