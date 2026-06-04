@@ -284,6 +284,12 @@ if ($ambil_soal) {
         document.addEventListener('copy',  function(e) { e.preventDefault(); return false; });
         document.addEventListener('cut',   function(e) { e.preventDefault(); return false; });
         document.addEventListener('paste', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('beforeinput', function(e) {
+            if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+                e.preventDefault();
+                return false;
+            }
+        });
 
         // 3. Blokir shortcut keyboard berbahaya (Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A)
         document.addEventListener('keydown', function(e) {
@@ -324,6 +330,12 @@ if ($ambil_soal) {
             textarea.addEventListener('drop', function(e) {
                 e.preventDefault();
                 return false;
+            });
+            textarea.addEventListener('beforeinput', function(e) {
+                if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+                    e.preventDefault();
+                    return false;
+                }
             });
             // Blokir klik kanan di textarea juga
             textarea.addEventListener('contextmenu', function(e) {
