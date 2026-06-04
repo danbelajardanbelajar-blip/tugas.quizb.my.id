@@ -17,6 +17,20 @@ if (!$conn) {
 $nama = $_SESSION['username'];
 $pesan = "";
 
+// Ambil nama lengkap dari database
+$query_nama = $conn->prepare("SELECT nama_lengkap FROM user WHERE username = ?");
+$query_nama->bind_param("s", $nama);
+$query_nama->execute();
+$result_nama = $query_nama->get_result();
+$nama_lengkap = $nama; // default fallback ke username
+if ($result_nama->num_rows > 0) {
+    $row_nama = $result_nama->fetch_assoc();
+    if (!empty($row_nama['nama_lengkap'])) {
+        $nama_lengkap = $row_nama['nama_lengkap'];
+    }
+}
+$query_nama->close();
+
 // PROSES FORM (Baik untuk Autosave via AJAX maupun Submit tombol)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
@@ -158,7 +172,8 @@ if ($ambil_soal) {
 <div class="container">
     <h2><?= htmlspecialchars($nama_tema_soal, ENT_QUOTES, 'UTF-8'); ?></h2>
     <div class="user-info">
-        👤 Dikerjakan oleh: <?= htmlspecialchars($nama); ?>
+        👤 Dikerjakan oleh: <strong><?= htmlspecialchars($nama_lengkap); ?></strong>
+        <span style="color:#7f8c8d; font-weight:normal; font-size:0.9em;"> (<?= htmlspecialchars($nama); ?>)</span>
     </div>
     
     <?= $pesan; ?>

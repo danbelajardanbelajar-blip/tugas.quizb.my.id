@@ -19,10 +19,10 @@ include 'koneksi.php';
 
 // Ambil data mahasiswa yang sedang login
 $user_sekarang = $_SESSION['username'];
-$query_user    = mysqli_query($conn, "SELECT kelas FROM user WHERE username = '$user_sekarang'");
+$query_user    = mysqli_query($conn, "SELECT kelas, nama_lengkap FROM user WHERE username = '$user_sekarang'");
 $data_user     = $query_user ? mysqli_fetch_assoc($query_user) : null;
 $kelas_mhs     = $data_user['kelas'] ?? '';
-$nama_mhs      = $user_sekarang; // gunakan username sebagai display name
+$nama_mhs      = !empty($data_user['nama_lengkap']) ? $data_user['nama_lengkap'] : $user_sekarang;
 
 // Cek apakah mahasiswa ini sudah pernah mengerjakan soal (tb_soal)
 $cek_tb_soal   = mysqli_query($conn, "SELECT id, waktu_submit FROM tb_soal WHERE nama_mahasiswa = '$user_sekarang' LIMIT 1");
