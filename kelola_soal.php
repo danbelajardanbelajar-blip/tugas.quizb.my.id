@@ -63,8 +63,8 @@ if (isset($_GET['delete_soal'])) {
 
 // PROSES TAMBAH SOAL
 if (isset($_POST['add_soal'])) {
-    if (!$active_theme_id) {
-        $pesan = "<div class='alert alert-danger'>Pilih tema terlebih dahulu sebelum menambahkan soal.</div>";
+    if (!$active_theme_id || !$active_theme_label) {
+        $pesan = "<div class='alert alert-danger'>Pilih tema yang valid terlebih dahulu sebelum menambahkan soal.</div>";
     } else {
         $defaultText = mysqli_real_escape_string($conn, 'Tulis pertanyaan baru di sini...');
         $insertSoal = $conn->query("INSERT INTO tb_daftar_soal (teks_soal, tema_id) VALUES ('{$defaultText}', {$active_theme_id})");
@@ -128,15 +128,19 @@ if (isset($_GET['delete_tema'])) {
 if (isset($_POST['update_soal'])) {
     $berhasil = true;
 
-    if ($active_theme_id) {
+    if ($active_theme_id && $active_theme_label) {
         $query_soal_update = $conn->query("SELECT id FROM tb_daftar_soal WHERE tema_id = {$active_theme_id} ORDER BY id ASC");
-        while ($soal_update = $query_soal_update->fetch_assoc()) {
-            $soalId = intval($soal_update['id']);
-            $teks_baru = mysqli_real_escape_string($conn, $_POST['soal_' . $soalId] ?? '');
-            $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $soalId";
-            if (!$conn->query($query_update)) {
-                $berhasil = false;
+        if ($query_soal_update && $query_soal_update->num_rows > 0) {
+            while ($soal_update = $query_soal_update->fetch_assoc()) {
+                $soalId = intval($soal_update['id']);
+                $teks_baru = mysqli_real_escape_string($conn, $_POST['soal_' . $soalId] ?? '');
+                $query_update = "UPDATE tb_daftar_soal SET teks_soal = '$teks_baru' WHERE id = $soalId";
+                if (!$conn->query($query_update)) {
+                    $berhasil = false;
+                }
             }
+        } else {
+            $berhasil = false;
         }
     } else {
         $berhasil = false;
@@ -145,7 +149,7 @@ if (isset($_POST['update_soal'])) {
     if ($berhasil) {
         $pesan = "<div class='alert alert-success alert-dismissible fade show'>Daftar soal berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
     } else {
-        $pesan = "<div class='alert alert-danger'>Terjadi kesalahan saat mengupdate soal. Pastikan Anda memilih tema yang benar.</div>";
+        $pesan = "<div class='alert alert-danger'>Terjadi kesalahan saat mengupdate soal. Pastikan tema masih tersedia dan halaman sudah dimuat ulang.</div>";
     }
 }
 ?>
