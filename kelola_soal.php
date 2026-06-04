@@ -59,7 +59,19 @@ if ($resSoal) {
     }
 }
 
-// Ambil semua jawaban mahasiswa (tanpa filter tema_id karena bisa NULL)
+// Buat map nama mahasiswa dari tabel user (sebagai fallback pasti)
+$namaMap   = [];
+$kelasMap  = [];
+$resUser   = $conn->query("SELECT username, nama_lengkap, kelas FROM `user` WHERE role='user'");
+if ($resUser) {
+    while ($ru = $resUser->fetch_assoc()) {
+        $namaMap[trim($ru['username'])]  = $ru['nama_lengkap'];
+        $kelasMap[trim($ru['username'])] = $ru['kelas'];
+    }
+}
+
+// Ambil semua jawaban mahasiswa
+// COLLATE digunakan untuk mengatasi perbedaan charset antara kedua kolom
 $semuaJawaban = [];
 $resJwb = $conn->query("
     SELECT ts.id, ts.nama_mahasiswa, ts.tema_id, ts.waktu_submit,
@@ -70,21 +82,28 @@ $resJwb = $conn->query("
            u.nama_lengkap, u.kelas AS kelas_user,
            tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
     FROM tb_soal ts
-    LEFT JOIN `user` u ON u.username = ts.nama_mahasiswa
+    LEFT JOIN `user` u ON u.username COLLATE utf8mb4_unicode_ci = ts.nama_mahasiswa
     LEFT JOIN tema_masalah tm ON tm.id_tema = ts.tema_id
     ORDER BY ts.waktu_submit DESC
 ");
 if ($resJwb) {
     while ($rj = $resJwb->fetch_assoc()) {
+        $nim = trim($rj['nama_mahasiswa']);
+        // Jika JOIN tidak menghasilkan nama, gunakan lookup dari namaMap
+        if (empty($rj['nama_lengkap']) && isset($namaMap[$nim])) {
+            $rj['nama_lengkap'] = $namaMap[$nim];
+            $rj['kelas_user']   = $kelasMap[$nim] ?? '';
+        }
         $semuaJawaban[] = $rj;
     }
-} elseif ($conn->errno) {
-    // Fallback: query tanpa JOIN jika ada masalah kolom
+} else {
+    // Fallback total: query tanpa JOIN
     $resJwb2 = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
     if ($resJwb2) {
         while ($rj = $resJwb2->fetch_assoc()) {
-            $rj['nama_lengkap'] = '';
-            $rj['kelas_user']   = '';
+            $nim = trim($rj['nama_mahasiswa']);
+            $rj['nama_lengkap'] = $namaMap[$nim] ?? '';
+            $rj['kelas_user']   = $kelasMap[$nim] ?? '';
             $rj['nama_tema']    = '';
             $rj['kelompok_tema']= '';
             $rj['kelas_tema']   = '';
@@ -564,14 +583,23 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                             <?php if (empty($semuaJawaban)): ?>
                                 <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada mahasiswa yang mengumpulkan jawaban.</td></tr>
                             <?php else: ?>
-                                <?php foreach ($semuaJawaban as $noJ => $r): ?>
+                                <?php foreach ($semuaJawaban as $noJ => $r):
+                                    $nim         = htmlspecialchars($r['nama_mahasiswa']);
+                                    $namaLengkap = htmlspecialchars($r['nama_lengkap'] ?: '');
+                                    $kelas       = htmlspecialchars($r['kelas_user'] ?: '');
+                                ?>
                                 <tr>
                                     <td class="text-center"><?= $noJ + 1; ?></td>
                                     <td>
-                                        <span class="fw-bold"><?= htmlspecialchars($r['nama_lengkap'] ?: $r['nama_mahasiswa']); ?></span><br>
-                                        <small class="text-muted"><?= htmlspecialchars($r['nama_mahasiswa']); ?></small>
-                                        <?php if (!empty($r['kelas_user'])): ?>
-                                            <span class="badge bg-secondary ms-1"><?= htmlspecialchars($r['kelas_user']); ?></span>
+                                        <?php if ($namaLengkap): ?>
+                                            <span class="fw-bold text-dark"><?= $namaLengkap; ?></span>
+                                        <?php else: ?>
+                                            <span class="fw-bold text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Nama tidak ditemukan</span>
+                                        <?php endif; ?>
+                                        <br>
+                                        <small class="text-muted"><i class="bi bi-person-badge"></i> <?= $nim; ?></small>
+                                        <?php if ($kelas): ?>
+                                            <span class="badge bg-primary ms-1"><?= $kelas; ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
