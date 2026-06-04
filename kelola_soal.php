@@ -38,7 +38,12 @@ if ($temaRes) {
     }
 }
 
-$active_theme_id = isset($_GET['theme']) && intval($_GET['theme']) > 0 ? intval($_GET['theme']) : null;
+$active_theme_id = null;
+if (isset($_GET['theme']) && intval($_GET['theme']) > 0) {
+    $active_theme_id = intval($_GET['theme']);
+} elseif (isset($_POST['theme']) && intval($_POST['theme']) > 0) {
+    $active_theme_id = intval($_POST['theme']);
+}
 $active_theme_label = $active_theme_id && isset($temaMap[$active_theme_id]) ? $temaMap[$active_theme_id] : null;
 
 // PROSES HAPUS JAWABAN MAHASISWA
@@ -270,13 +275,15 @@ if (isset($_POST['update_soal'])) {
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <span class="font-weight-bold">Edit Soal<?php if ($active_theme_label) echo ' - ' . htmlspecialchars($active_theme_label, ENT_QUOTES, 'UTF-8'); ?></span>
                     <?php if ($active_theme_id) : ?>
-                    <form action="?theme=<?= $active_theme_id; ?>#soal" method="POST" class="mb-0">
+                    <form action="kelola_soal.php#soal" method="POST" class="mb-0">
+                        <input type="hidden" name="theme" value="<?= $active_theme_id; ?>">
                         <button type="submit" name="add_soal" class="btn btn-light btn-sm">Tambahkan Soal</button>
                     </form>
                     <?php endif; ?>
                 </div>
                 <div class="card-body">
-                    <form action="?theme=<?= $active_theme_id; ?>#soal" method="POST">
+                    <form action="kelola_soal.php#soal" method="POST">
+                        <input type="hidden" name="theme" value="<?= $active_theme_id; ?>">
                         <?php
                         if ($active_theme_id) {
                             $query_soal = $conn->query("SELECT * FROM tb_daftar_soal WHERE tema_id = {$active_theme_id} ORDER BY id ASC");
