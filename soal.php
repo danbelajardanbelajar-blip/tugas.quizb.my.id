@@ -318,6 +318,7 @@ if ($ambil_soal) {
             textarea.dataset.lastValue = textarea.value;
             textarea.dataset.lastSelectionStart = textarea.selectionStart;
             textarea.dataset.lastSelectionEnd = textarea.selectionEnd;
+            textarea.dataset.isComposing = 'false';
 
             function restoreTextarea() {
                 textarea.value = textarea.dataset.lastValue || '';
@@ -336,6 +337,16 @@ if ($ambil_soal) {
                 }
                 return false;
             }
+
+            textarea.addEventListener('compositionstart', function() {
+                textarea.dataset.isComposing = 'true';
+            });
+            textarea.addEventListener('compositionend', function() {
+                textarea.dataset.isComposing = 'false';
+                textarea.dataset.lastValue = textarea.value;
+                textarea.dataset.lastSelectionStart = textarea.selectionStart;
+                textarea.dataset.lastSelectionEnd = textarea.selectionEnd;
+            });
 
             textarea.addEventListener('focus', function() {
                 textarea.dataset.lastValue = textarea.value;
@@ -372,13 +383,28 @@ if ($ambil_soal) {
                 const prevValue = textarea.dataset.lastValue || '';
                 const newValue = textarea.value;
                 const inserted = newValue.length - prevValue.length;
+                const composing = textarea.dataset.isComposing === 'true';
 
-                if (!e.inputType && typeof e.data === 'string' && e.data.length > 1) {
+                if (blockPasteOrDrop(e)) {
+                    return;
+                }
+
+                if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
                     restoreTextarea();
                     return;
                 }
 
-                if (!e.inputType && inserted > 1) {
+                if (!composing && typeof e.data === 'string' && e.data.length > 1) {
+                    restoreTextarea();
+                    return;
+                }
+
+                if (!composing && inserted > 1 && e.inputType !== 'insertText') {
+                    restoreTextarea();
+                    return;
+                }
+
+                if (!composing && inserted > 10 && e.inputType === 'insertText') {
                     restoreTextarea();
                     return;
                 }
