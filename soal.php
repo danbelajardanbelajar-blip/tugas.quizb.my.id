@@ -315,8 +315,38 @@ if ($ambil_soal) {
         // 5. Blokir paste khusus di setiap textarea (lapisan ganda)
         const textareas = document.querySelectorAll('.soal-textarea');
         textareas.forEach(function(textarea) {
+            textarea.dataset.lastValue = textarea.value;
+            textarea.dataset.lastSelectionStart = textarea.selectionStart;
+            textarea.dataset.lastSelectionEnd = textarea.selectionEnd;
+
+            function restoreTextarea() {
+                textarea.value = textarea.dataset.lastValue || '';
+                const start = parseInt(textarea.dataset.lastSelectionStart, 10) || textarea.value.length;
+                const end = parseInt(textarea.dataset.lastSelectionEnd, 10) || textarea.value.length;
+                textarea.setSelectionRange(start, end);
+            }
+
+            function blockPasteOrDrop(event) {
+                const pasteTypes = ['insertFromPaste', 'insertFromDrop', 'insertFromPasteAsQuotation', 'insertFromPasteByDrag'];
+                if (pasteTypes.includes(event.inputType)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    restoreTextarea();
+                    return true;
+                }
+                return false;
+            }
+
+            textarea.addEventListener('focus', function() {
+                textarea.dataset.lastValue = textarea.value;
+                textarea.dataset.lastSelectionStart = textarea.selectionStart;
+                textarea.dataset.lastSelectionEnd = textarea.selectionEnd;
+            });
+
             textarea.addEventListener('paste', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                restoreTextarea();
                 return false;
             });
             textarea.addEventListener('copy', function(e) {
@@ -329,15 +359,34 @@ if ($ambil_soal) {
             });
             textarea.addEventListener('drop', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                restoreTextarea();
                 return false;
             });
             textarea.addEventListener('beforeinput', function(e) {
-                if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
-                    e.preventDefault();
+                if (blockPasteOrDrop(e)) {
                     return false;
                 }
             });
-            // Blokir klik kanan di textarea juga
+            textarea.addEventListener('input', function(e) {
+                const prevValue = textarea.dataset.lastValue || '';
+                const newValue = textarea.value;
+                const inserted = newValue.length - prevValue.length;
+
+                if (!e.inputType && typeof e.data === 'string' && e.data.length > 1) {
+                    restoreTextarea();
+                    return;
+                }
+
+                if (!e.inputType && inserted > 1) {
+                    restoreTextarea();
+                    return;
+                }
+
+                textarea.dataset.lastValue = textarea.value;
+                textarea.dataset.lastSelectionStart = textarea.selectionStart;
+                textarea.dataset.lastSelectionEnd = textarea.selectionEnd;
+            });
             textarea.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 return false;
