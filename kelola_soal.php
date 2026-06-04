@@ -2,8 +2,8 @@
 ob_start(); // Cegah 'headers already sent' agar redirect header() selalu berhasil
 session_start();
 
-// Proteksi login (Sesuaikan dengan session admin Anda jika ada)
-if (!isset($_SESSION['status']) || $_SESSION['status'] != "login") {
+// Proteksi login - HANYA ADMIN yang bisa akses
+if (!isset($_SESSION['status']) || $_SESSION['status'] != "login" || $_SESSION['role'] != 'admin') {
     header("location:login.php");
     exit();
 }
@@ -18,6 +18,9 @@ $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
     die("Koneksi Database Gagal: " . $conn->connect_error);
 }
+
+// Set charset untuk mendukung teks Arab
+$conn->set_charset("utf8mb4");
 
 $pesan = "";
 
@@ -46,7 +49,9 @@ if (!$checkPK || $checkPK->num_rows === 0) {
 $temaList = [];
 $temaMap = [];
 $temaRes = $conn->query("SELECT id_tema, kelas, kelompok, nama_tema FROM tema_masalah ORDER BY kelas ASC, kelompok ASC, nama_tema ASC");
-if ($temaRes) {
+if (!$temaRes) {
+    $pesan = "<div class='alert alert-danger'>Error loading themes: " . htmlspecialchars($conn->error) . "</div>";
+} else {
     while ($temaRow = $temaRes->fetch_assoc()) {
         $temaList[] = $temaRow;
         $temaMap[$temaRow['id_tema']] = $temaRow['kelas'] . ' | ' . $temaRow['kelompok'] . ' | ' . $temaRow['nama_tema'];
@@ -258,6 +263,7 @@ if (isset($_POST['update_soal'])) {
 
                                 // Jika query gagal, fallback tanpa JOIN
                                 if ($query_jawaban === false) {
+                                    $pesan = "<div class='alert alert-danger'>Database Error: " . htmlspecialchars($conn->error) . "</div>";
                                     $query_jawaban = $conn->query("SELECT * FROM tb_soal ORDER BY waktu_submit DESC");
                                 }
 
@@ -402,6 +408,13 @@ if (isset($_POST['update_soal'])) {
             <div class="card shadow-sm border-secondary">
                 <div class="card-header bg-secondary text-white font-weight-bold">Daftar Tema</div>
                 <div class="card-body p-0">
+                    <?php if (empty($temaList)): ?>
+                        <div class="alert alert-warning m-3">
+                            <strong>⚠️ Tidak ada tema ditemukan!</strong><br>
+                            Database query berhasil tetapi tabel <code>tema_masalah</code> kosong.<br>
+                            Silakan tambahkan tema baru di form di atas.
+                        </div>
+                    <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0">
                             <thead class="table-light">
@@ -473,6 +486,7 @@ if (isset($_POST['update_soal'])) {
                             </tbody>
                         </table>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
