@@ -193,9 +193,6 @@ $query_tema_soal = mysqli_query($conn, "
             <span class="user-chip">
                 <i class="bi bi-person-circle me-1"></i>
                 <?= htmlspecialchars($nama_mhs, ENT_QUOTES, 'UTF-8'); ?>
-                <?php if ($kelas_mhs): ?>
-                    &nbsp;·&nbsp; Kelas <?= htmlspecialchars($kelas_mhs, ENT_QUOTES, 'UTF-8'); ?>
-                <?php endif; ?>
             </span>
             <a href="logout.php" class="btn btn-sm btn-outline-danger rounded-pill">
                 <i class="bi bi-box-arrow-right me-1"></i>Logout
@@ -311,7 +308,7 @@ $query_tema_soal = mysqli_query($conn, "
     <?php else: ?>
     <div class="empty-state">
         <i class="bi bi-journal-x d-block mb-3"></i>
-        <p class="mb-0">Belum ada soal yang tersedia untuk kelas <strong><?= htmlspecialchars($kelas_mhs ?: 'Anda', ENT_QUOTES, 'UTF-8'); ?></strong>.<br>
+        <p class="mb-0">Belum ada soal yang tersedia.<br>
         Silakan hubungi dosen untuk informasi lebih lanjut.</p>
     </div>
     <?php endif; ?>
