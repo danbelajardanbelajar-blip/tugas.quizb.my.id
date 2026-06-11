@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS `soal` (
     `id`         INT  NOT NULL AUTO_INCREMENT,
     `tema_id`    INT  NOT NULL,
     `pertanyaan` TEXT NOT NULL,
+    `jenis`      ENUM('ganda', 'uraian', 'file') NOT NULL DEFAULT 'uraian',
+    `opsi`       JSON NULL,
     `urutan`     INT  NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),

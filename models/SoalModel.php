@@ -12,12 +12,14 @@ class SoalModel extends BaseModel
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO soal (tema_id, pertanyaan, urutan)
-            VALUES (:tema_id, :pertanyaan, :urutan)
+            INSERT INTO soal (tema_id, pertanyaan, jenis, opsi, urutan)
+            VALUES (:tema_id, :pertanyaan, :jenis, :opsi, :urutan)
         ");
         $stmt->execute([
             ':tema_id'    => $data['tema_id'],
             ':pertanyaan' => $data['pertanyaan'],
+            ':jenis'      => $data['jenis'] ?? 'uraian',
+            ':opsi'       => isset($data['opsi']) ? json_encode($data['opsi']) : null,
             ':urutan'     => $data['urutan'] ?? 0,
         ]);
         return (int) $this->pdo->lastInsertId();
@@ -26,10 +28,13 @@ class SoalModel extends BaseModel
     public function update(int $id, array $data): bool
     {
         $stmt = $this->pdo->prepare("
-            UPDATE soal SET pertanyaan = :pertanyaan, urutan = :urutan WHERE id = :id
+            UPDATE soal SET pertanyaan = :pertanyaan, jenis = :jenis, opsi = :opsi, urutan = :urutan
+            WHERE id = :id
         ");
         return $stmt->execute([
             ':pertanyaan' => $data['pertanyaan'],
+            ':jenis'      => $data['jenis'] ?? 'uraian',
+            ':opsi'       => isset($data['opsi']) ? json_encode($data['opsi']) : null,
             ':urutan'     => $data['urutan'] ?? 0,
             ':id'         => $id,
         ]);

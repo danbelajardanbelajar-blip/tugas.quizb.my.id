@@ -165,10 +165,42 @@ const TugasView = {
                         ${(tm.soals || []).map((s, si) => this.soalItemHtml(s, si + 1, tm.id)).join('')}
                     </div>
                     <div class="soal-form" id="soal-form-${tm.id}" style="display:none">
-                        <label class="form-label">Pertanyaan Uraian Baru</label>
+                        <label class="form-label">Jenis Soal</label>
+                        <select class="form-control mb-2" id="soal-jenis-${tm.id}" onchange="TugasView.changeSoalJenis(${tm.id})">
+                            <option value="uraian">📝 Jawaban / Uraian</option>
+                            <option value="ganda">🔘 Pilihan Ganda</option>
+                            <option value="file">📎 Upload File</option>
+                        </select>
+
+                        <label class="form-label">Pertanyaan</label>
                         <textarea class="form-control" id="soal-input-${tm.id}"
-                                  placeholder="Tulis pertanyaan uraian di sini…" rows="3"></textarea>
-                        <div class="soal-form-actions">
+                                  placeholder="Tulis pertanyaan di sini…" rows="3"></textarea>
+                        
+                        <div id="soal-opsi-wrap-${tm.id}" style="display:none; margin-top:12px;">
+                            <label class="form-label">Opsi Jawaban</label>
+                            <div style="display:flex; gap:8px; margin-bottom:8px">
+                                <span style="font-weight:bold; width:20px; text-align:center">A.</span>
+                                <input type="text" class="form-control" id="soal-opsi-a-${tm.id}" placeholder="Pilihan A (Wajib)">
+                            </div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px">
+                                <span style="font-weight:bold; width:20px; text-align:center">B.</span>
+                                <input type="text" class="form-control" id="soal-opsi-b-${tm.id}" placeholder="Pilihan B (Wajib)">
+                            </div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px">
+                                <span style="font-weight:bold; width:20px; text-align:center">C.</span>
+                                <input type="text" class="form-control" id="soal-opsi-c-${tm.id}" placeholder="Pilihan C (Opsional)">
+                            </div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px">
+                                <span style="font-weight:bold; width:20px; text-align:center">D.</span>
+                                <input type="text" class="form-control" id="soal-opsi-d-${tm.id}" placeholder="Pilihan D (Opsional)">
+                            </div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px">
+                                <span style="font-weight:bold; width:20px; text-align:center">E.</span>
+                                <input type="text" class="form-control" id="soal-opsi-e-${tm.id}" placeholder="Pilihan E (Opsional)">
+                            </div>
+                        </div>
+
+                        <div class="soal-form-actions mt-3">
                             <button class="btn btn-secondary btn-sm"
                                     onclick="TugasView.hideSoalForm(${tm.id})">Batal</button>
                             <button class="btn btn-primary btn-sm"
@@ -188,10 +220,27 @@ const TugasView = {
     },
 
     soalItemHtml(s, num, temaId) {
+        const types = { uraian: '📝 Uraian', ganda: '🔘 Ganda', file: '📎 File' };
+        let opsiHtml = '';
+        if (s.jenis === 'ganda' && s.opsi) {
+            let opsiObj = s.opsi;
+            if (typeof opsiObj === 'string') {
+                try { opsiObj = JSON.parse(opsiObj); } catch(e) {}
+            }
+            if (typeof opsiObj === 'object') {
+                opsiHtml = '<div style="margin-top:8px; font-size:13px;">' + 
+                    Object.entries(opsiObj).map(([k,v]) => `<div style="margin-bottom:2px"><strong>${k}.</strong> ${escHtml(v)}</div>`).join('') +
+                    '</div>';
+            }
+        }
         return `
             <div class="soal-item" id="soal-item-${s.id}">
                 <div class="soal-num">${num}</div>
-                <div class="soal-text">${escHtml(s.pertanyaan)}</div>
+                <div class="soal-text">
+                    <span class="badge badge-default" style="font-size:10px; margin-bottom:6px; display:inline-block">${types[s.jenis] || 'Uraian'}</span><br>
+                    ${escHtml(s.pertanyaan)}
+                    ${opsiHtml}
+                </div>
                 <div class="soal-actions">
                     <button class="btn btn-secondary btn-sm btn-icon"
                             title="Edit Soal" onclick="TugasView.openEditSoal(${s.id})">✏️</button>
@@ -206,14 +255,27 @@ const TugasView = {
         item.classList.toggle('open');
     },
 
+    changeSoalJenis(temaId) {
+        const jenis = document.getElementById(`soal-jenis-${temaId}`).value;
+        document.getElementById(`soal-opsi-wrap-${temaId}`).style.display = (jenis === 'ganda') ? 'block' : 'none';
+    },
+
     showSoalForm(temaId) {
         document.getElementById(`soal-form-${temaId}`).style.display = 'block';
         document.getElementById(`soal-input-${temaId}`).focus();
+        this.changeSoalJenis(temaId);
     },
 
     hideSoalForm(temaId) {
         document.getElementById(`soal-form-${temaId}`).style.display = 'none';
         document.getElementById(`soal-input-${temaId}`).value = '';
+        document.getElementById(`soal-jenis-${temaId}`).value = 'uraian';
+        this.changeSoalJenis(temaId);
+        document.getElementById(`soal-opsi-a-${temaId}`).value = '';
+        document.getElementById(`soal-opsi-b-${temaId}`).value = '';
+        document.getElementById(`soal-opsi-c-${temaId}`).value = '';
+        document.getElementById(`soal-opsi-d-${temaId}`).value = '';
+        document.getElementById(`soal-opsi-e-${temaId}`).value = '';
     },
 
     // ──────────────────────────────────────────────────────────────
@@ -408,11 +470,26 @@ const TugasView = {
     // ──────────────────────────────────────────────────────────────
     async doAddSoal(temaId) {
         const btn = document.getElementById(`btn-save-soal-${temaId}`);
+        const jenis = document.getElementById(`soal-jenis-${temaId}`).value;
         const pertanyaan = document.getElementById(`soal-input-${temaId}`).value.trim();
         if (!pertanyaan) { Toast.show('Pertanyaan wajib diisi', 'warning'); return; }
 
+        let opsi = null;
+        if (jenis === 'ganda') {
+            const a = document.getElementById(`soal-opsi-a-${temaId}`).value.trim();
+            const b = document.getElementById(`soal-opsi-b-${temaId}`).value.trim();
+            const c = document.getElementById(`soal-opsi-c-${temaId}`).value.trim();
+            const d = document.getElementById(`soal-opsi-d-${temaId}`).value.trim();
+            const e = document.getElementById(`soal-opsi-e-${temaId}`).value.trim();
+            if (!a || !b) { Toast.show('Minimal opsi A dan B wajib diisi', 'warning'); return; }
+            opsi = { A: a, B: b };
+            if (c) opsi.C = c;
+            if (d) opsi.D = d;
+            if (e) opsi.E = e;
+        }
+
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.post('soal.php', { tema_id: temaId, pertanyaan });
+        const res = await API.post('soal.php', { tema_id: temaId, pertanyaan, jenis, opsi });
         setLoading(btn, false);
 
         if (res.success) {
@@ -434,10 +511,46 @@ const TugasView = {
             if (soal) break;
         }
         if (!soal) return;
+        let opsiObj = {};
+        if (soal.jenis === 'ganda' && soal.opsi) {
+            opsiObj = typeof soal.opsi === 'string' ? JSON.parse(soal.opsi) : soal.opsi;
+        }
+
         Modal.open('✏️ Edit Soal',
             `<div class="form-group">
-                <label class="form-label">Pertanyaan Uraian</label>
+                <label class="form-label">Jenis Soal</label>
+                <select class="form-control mb-2" id="s-jenis" onchange="document.getElementById('s-opsi-wrap').style.display = (this.value==='ganda')?'block':'none'">
+                    <option value="uraian" ${soal.jenis==='uraian'?'selected':''}>📝 Jawaban / Uraian</option>
+                    <option value="ganda" ${soal.jenis==='ganda'?'selected':''}>🔘 Pilihan Ganda</option>
+                    <option value="file" ${soal.jenis==='file'?'selected':''}>📎 Upload File</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pertanyaan</label>
                 <textarea id="s-pertanyaan" class="form-control" rows="4">${escHtml(soal.pertanyaan)}</textarea>
+            </div>
+            <div id="s-opsi-wrap" style="display:${soal.jenis==='ganda'?'block':'none'}; margin-bottom:12px;">
+                <label class="form-label">Opsi Jawaban</label>
+                <div style="display:flex; gap:8px; margin-bottom:8px">
+                    <span style="font-weight:bold; width:20px; text-align:center">A.</span>
+                    <input type="text" class="form-control" id="s-opsi-a" value="${escHtml(opsiObj.A||'')}">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px">
+                    <span style="font-weight:bold; width:20px; text-align:center">B.</span>
+                    <input type="text" class="form-control" id="s-opsi-b" value="${escHtml(opsiObj.B||'')}">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px">
+                    <span style="font-weight:bold; width:20px; text-align:center">C.</span>
+                    <input type="text" class="form-control" id="s-opsi-c" value="${escHtml(opsiObj.C||'')}">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px">
+                    <span style="font-weight:bold; width:20px; text-align:center">D.</span>
+                    <input type="text" class="form-control" id="s-opsi-d" value="${escHtml(opsiObj.D||'')}">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px">
+                    <span style="font-weight:bold; width:20px; text-align:center">E.</span>
+                    <input type="text" class="form-control" id="s-opsi-e" value="${escHtml(opsiObj.E||'')}">
+                </div>
             </div>`,
             `<button class="btn btn-secondary" onclick="Modal.close()">Batal</button>
              <button class="btn btn-primary" id="btn-save-edit-soal">Simpan</button>`
@@ -450,11 +563,26 @@ const TugasView = {
 
     async doEditSoal(soalId) {
         const btn        = document.getElementById('btn-save-edit-soal');
+        const jenis      = document.getElementById('s-jenis').value;
         const pertanyaan = document.getElementById('s-pertanyaan').value.trim();
         if (!pertanyaan) { Toast.show('Pertanyaan wajib diisi', 'warning'); return; }
 
+        let opsi = null;
+        if (jenis === 'ganda') {
+            const a = document.getElementById('s-opsi-a').value.trim();
+            const b = document.getElementById('s-opsi-b').value.trim();
+            const c = document.getElementById('s-opsi-c').value.trim();
+            const d = document.getElementById('s-opsi-d').value.trim();
+            const e = document.getElementById('s-opsi-e').value.trim();
+            if (!a || !b) { Toast.show('Minimal opsi A dan B wajib diisi', 'warning'); return; }
+            opsi = { A: a, B: b };
+            if (c) opsi.C = c;
+            if (d) opsi.D = d;
+            if (e) opsi.E = e;
+        }
+
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.put(`soal.php?id=${soalId}`, { pertanyaan });
+        const res = await API.put(`soal.php?id=${soalId}`, { pertanyaan, jenis, opsi });
         setLoading(btn, false);
 
         if (res.success) {

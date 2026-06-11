@@ -28,7 +28,7 @@ class JawabanModel extends BaseModel
     public function getByMahasiswaAndTugas(int $mahasiswaId, int $tugasId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT j.*, s.pertanyaan, s.tema_id, s.urutan as soal_urutan,
+            SELECT j.*, s.pertanyaan, s.tema_id, s.urutan as soal_urutan, s.jenis, s.opsi,
                    tm.nama AS tema_nama
             FROM jawaban j
             JOIN soal s  ON s.id  = j.soal_id
@@ -62,7 +62,7 @@ class JawabanModel extends BaseModel
     public function getJawabanByMahasiswaAndTema(int $mahasiswaId, int $temaId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT j.*, s.pertanyaan, s.urutan
+            SELECT j.*, s.pertanyaan, s.urutan, s.jenis, s.opsi
             FROM jawaban j
             JOIN soal s ON s.id = j.soal_id
             WHERE j.mahasiswa_id = ? AND s.tema_id = ?

@@ -151,18 +151,60 @@ const KerjakanView = {
                         ${soals.map((s, i) => {
                             const ans = this._jawaban.find(x => x.soal_id === s.id);
                             const isi = ans ? ans.isi : '';
+                            const isPastDeadline = isOverdue(this._tugas.deadline);
+                            
+                            let inputHtml = '';
+                            if (s.jenis === 'ganda') {
+                                let opsiObj = s.opsi;
+                                if (typeof opsiObj === 'string') {
+                                    try { opsiObj = JSON.parse(opsiObj); } catch(e) {}
+                                }
+                                if (typeof opsiObj === 'object') {
+                                    inputHtml = '<div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">';
+                                    Object.entries(opsiObj).forEach(([k,v]) => {
+                                        const checked = (isi === k) ? 'checked' : '';
+                                        inputHtml += `
+                                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer">
+                                                <input type="radio" name="soal-${s.id}" value="${k}" ${checked} 
+                                                       ${isPastDeadline ? 'disabled' : ''}
+                                                       onchange="KerjakanView.handleInput(${s.id}, this.value)">
+                                                <strong style="width:20px; text-align:center">${k}.</strong> ${escHtml(v)}
+                                            </label>`;
+                                    });
+                                    inputHtml += '</div>';
+                                }
+                            } else if (s.jenis === 'file') {
+                                inputHtml = `
+                                    <div style="margin-top:12px;">
+                                        ${isi ? `<div style="margin-bottom:8px">File saat ini: <a href="${escHtml(isi)}" target="_blank" class="badge badge-info">Lihat File</a></div>` : ''}
+                                        <input type="file" id="file-soal-${s.id}" class="form-control" ${isPastDeadline ? 'disabled' : ''} 
+                                            onchange="KerjakanView.handleInputFile(${s.id})">
+                                    </div>
+                                `;
+                            } else {
+                                inputHtml = `
+                                    <textarea class="form-control"
+                                              rows="4"
+                                              style="margin-top:12px"
+                                              placeholder="Ketik jawaban Anda di sini…"
+                                              data-soalid="${s.id}"
+                                              oninput="KerjakanView.handleInput(${s.id})"
+                                              ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                `;
+                            }
+
+                            const types = { uraian: '📝 Uraian', ganda: '🔘 Ganda', file: '📎 File' };
+
                             return `
                                 <div class="soal-kerjakan-item">
                                     <div class="soal-kerjakan-num">
                                         <div class="soal-kerjakan-label">Soal ${i + 1}</div>
                                     </div>
-                                    <div class="soal-kerjakan-pertanyaan">${escHtml(s.pertanyaan)}</div>
-                                    <textarea class="form-control"
-                                              rows="4"
-                                              placeholder="Ketik jawaban Anda di sini…"
-                                              data-soalid="${s.id}"
-                                              oninput="KerjakanView.handleInput(${s.id})"
-                                              ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                    <div class="soal-kerjakan-pertanyaan">
+                                        <span class="badge badge-default" style="font-size:10px; margin-bottom:6px; display:inline-block">${types[s.jenis] || 'Uraian'}</span><br>
+                                        ${escHtml(s.pertanyaan)}
+                                    </div>
+                                    ${inputHtml}
                                     <div class="save-indicator" id="save-ind-${s.id}">
                                         ✅ Tersimpan otomatis
                                     </div>
@@ -177,11 +219,17 @@ const KerjakanView = {
     },
 
     // ─── Auto-save mechanism ─────────────────────────────────────────
-    handleInput(soalId) {
+    handleInput(soalId, val = null) {
         if (this._saveTimeout) clearTimeout(this._saveTimeout);
         
-        const el = document.querySelector(`textarea[data-soalid="${soalId}"]`);
+        let isi = val;
+        if (isi === null) {
+            const el = document.querySelector(`textarea[data-soalid="${soalId}"]`);
+            if (el) isi = el.value;
+        }
+        
         const ind = document.getElementById(`save-ind-${soalId}`);
+        if (!ind) return;
         
         ind.innerHTML = `⏳ Menyimpan…`;
         ind.style.color = 'var(--warning)';
@@ -189,8 +237,57 @@ const KerjakanView = {
 
         // Debounce 1.5 seconds after user stops typing
         this._saveTimeout = setTimeout(() => {
-            this.saveAnswer(soalId, el.value);
+            this.saveAnswer(soalId, isi);
         }, 1500);
+    },
+
+    async handleInputFile(soalId) {
+        const el = document.getElementById(`file-soal-${soalId}`);
+        if (!el.files || el.files.length === 0) return;
+        
+        const file = el.files[0];
+        const ind = document.getElementById(`save-ind-${soalId}`);
+        
+        ind.innerHTML = `⏳ Mengupload…`;
+        ind.style.color = 'var(--warning)';
+        ind.classList.add('visible');
+
+        const formData = new FormData();
+        formData.append('soal_id', soalId);
+        formData.append('file', file);
+
+        try {
+            const res = await API.post('jawaban.php?action=submit', formData);
+            if (res.success) {
+                const ex = this._jawaban.find(x => x.soal_id == soalId);
+                if (ex) ex.isi = 'uploaded';
+                else this._jawaban.push({ soal_id: soalId, isi: 'uploaded' });
+
+                ind.innerHTML = `✅ Tersimpan`;
+                ind.style.color = 'var(--success)';
+                this.renderSidebar();
+                
+                setTimeout(() => {
+                    ind.classList.remove('visible');
+                    // Reload the answers to get the new file URL
+                    this.reloadAnswers();
+                }, 2000);
+            } else {
+                ind.innerHTML = `❌ Gagal mengupload`;
+                ind.style.color = 'var(--danger)';
+            }
+        } catch (err) {
+            ind.innerHTML = `❌ Gagal mengupload (Koneksi error)`;
+            ind.style.color = 'var(--danger)';
+        }
+    },
+
+    async reloadAnswers() {
+        const jRes = await API.get(`jawaban.php?action=mahasiswa-tugas&tugas_id=${this._tugas.id}`);
+        if (jRes.success) {
+            this._jawaban = jRes.data || [];
+            this.renderSoal(); // refresh file link
+        }
     },
 
     async saveAnswer(soalId, isi) {

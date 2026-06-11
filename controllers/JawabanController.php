@@ -62,9 +62,25 @@ class JawabanController extends BaseController
     {
         if ($this->method() !== 'POST') $this->error('Method not allowed', 405);
         $data   = $this->getBody();
-        $soalId = (int) ($data['soal_id'] ?? 0);
-        $isi    = (string) ($data['isi'] ?? '');
+        $soalId = (int) ($data['soal_id'] ?? $_POST['soal_id'] ?? 0);
+        $isi    = (string) ($data['isi'] ?? $_POST['isi'] ?? '');
+
         if (!$soalId) $this->error('soal_id diperlukan');
+
+        if (!empty($_FILES['file']['name']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/../uploads/jawaban/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', $_FILES['file']['name']);
+            $target   = $uploadDir . $fileName;
+            if (move_uploaded_file($_FILES['file']['tmp_name'], $target)) {
+                $isi = 'uploads/jawaban/' . $fileName;
+            } else {
+                $this->error('Gagal mengupload file');
+            }
+        }
+
         $this->jawabanModel->saveOrUpdate($session['user_id'], $soalId, $isi);
         $this->success(null, 'Jawaban tersimpan');
     }

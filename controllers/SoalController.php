@@ -43,6 +43,11 @@ class SoalController extends BaseController
         if (empty($data['tema_id']) || empty($data['pertanyaan'])) {
             $this->error('tema_id dan pertanyaan wajib diisi');
         }
+        if (($data['jenis'] ?? '') === 'ganda') {
+            if (empty($data['opsi']) || !is_array($data['opsi']) || count($data['opsi']) < 2) {
+                $this->error('Soal pilihan ganda minimal harus memiliki 2 opsi jawaban');
+            }
+        }
         $id = $this->soalModel->create($data);
         $this->success(['id' => $id], 'Soal berhasil ditambahkan');
     }
@@ -51,7 +56,13 @@ class SoalController extends BaseController
     {
         $this->requireRole('admin');
         if (!$id) $this->error('ID wajib diisi');
-        $this->soalModel->update($id, $this->getBody());
+        $data = $this->getBody();
+        if (($data['jenis'] ?? '') === 'ganda') {
+            if (empty($data['opsi']) || !is_array($data['opsi']) || count($data['opsi']) < 2) {
+                $this->error('Soal pilihan ganda minimal harus memiliki 2 opsi jawaban');
+            }
+        }
+        $this->soalModel->update($id, $data);
         $this->success(null, 'Soal berhasil diperbarui');
     }
 

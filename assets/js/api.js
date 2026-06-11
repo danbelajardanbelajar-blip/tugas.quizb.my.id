@@ -11,7 +11,9 @@ const API = (() => {
             credentials: 'same-origin',
         };
         const config = { ...defaults, ...options };
-        if (config.body && typeof config.body === 'object') {
+        if (config.body instanceof FormData) {
+            delete config.headers['Content-Type']; // Let browser set boundary automatically
+        } else if (config.body && typeof config.body === 'object') {
             config.body = JSON.stringify(config.body);
         }
 

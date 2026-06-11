@@ -190,7 +190,24 @@ const RekapView = {
             return;
         }
 
-        wrap.innerHTML = res.data.map((j, i) => `
+        wrap.innerHTML = res.data.map((j, i) => {
+            let isiHtml = '';
+            if (j.jenis === 'file') {
+                isiHtml = j.isi ? `<a href="${escHtml(j.isi)}" target="_blank" class="btn btn-sm btn-primary">⬇️ Download File</a>` : '<em style="color:var(--text-muted)">Belum upload file</em>';
+            } else if (j.jenis === 'ganda') {
+                let opsiObj = j.opsi;
+                if (typeof opsiObj === 'string') {
+                    try { opsiObj = JSON.parse(opsiObj); } catch(e) {}
+                }
+                const selectedText = (opsiObj && j.isi && opsiObj[j.isi]) ? opsiObj[j.isi] : '';
+                isiHtml = j.isi ? `<strong style="font-size:15px;color:var(--primary)">${escHtml(j.isi)}</strong>. ${escHtml(selectedText)}` : '<em style="color:var(--text-muted)">Belum dijawab</em>';
+            } else {
+                isiHtml = j.isi ? escHtml(j.isi) : '<em style="color:var(--text-muted)">Belum diisi</em>';
+            }
+
+            const typeBadge = j.jenis === 'ganda' ? '🔘 Ganda' : (j.jenis === 'file' ? '📎 File' : '📝 Uraian');
+
+            return `
             <div style="margin-bottom:20px;padding-bottom:20px;
                         ${i < res.data.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -200,6 +217,7 @@ const RekapView = {
                         color:var(--accent-light)">
                         Soal ${i + 1}
                     </span>
+                    <span class="badge badge-default" style="font-size:10px">${typeBadge}</span>
                 </div>
                 <p style="font-size:14px;color:var(--text-primary);margin-bottom:10px;font-weight:500">
                     ${escHtml(j.pertanyaan)}
@@ -214,11 +232,12 @@ const RekapView = {
                     line-height:1.6;
                     min-height:60px;
                     white-space:pre-wrap">
-                    ${j.isi ? escHtml(j.isi) : '<em style="color:var(--text-muted)">Belum diisi</em>'}
+                    ${isiHtml}
                 </div>
                 <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
                     Disimpan: ${formatDate(j.updated_at)}
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     },
 };
