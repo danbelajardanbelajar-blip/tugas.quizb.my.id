@@ -188,7 +188,8 @@ const KerjakanView = {
                                               style="margin-top:12px"
                                               placeholder="Ketik jawaban Anda di sini…"
                                               data-soalid="${s.id}"
-                                              oninput="KerjakanView.handleInput(${s.id})"
+                                              data-prev-value="${escHtml(isi)}"
+                                              oninput="KerjakanView.handleInput(${s.id}, null, event)"
                                               onpaste="event.preventDefault(); Toast.show('Anda tidak diizinkan melakukan paste jawaban.', 'warning'); return false;"
                                               ondrop="event.preventDefault(); return false;"
                                               autocomplete="off" autocorrect="off" spellcheck="false"
@@ -222,14 +223,33 @@ const KerjakanView = {
     },
 
     // ─── Auto-save mechanism ─────────────────────────────────────────
-    handleInput(soalId, val = null) {
+    handleInput(soalId, val = null, e = null) {
         if (this._saveTimeout) clearTimeout(this._saveTimeout);
         
         let isi = val;
+        let el = null;
         if (isi === null) {
-            const el = document.querySelector(`textarea[data-soalid="${soalId}"]`);
+            el = document.querySelector(`textarea[data-soalid="${soalId}"]`);
             if (el) isi = el.value;
         }
+        
+        // --- PROTEKSI PASTE DARI SUGGESTION & GBOARD CLIPBOARD ---
+        if (e && el) {
+            // Deteksi jika input lebih dari 2 karakter sekaligus (Paste/Saran/Clipboard)
+            if (e.inputType === 'insertFromPaste' || (e.data && e.data.length > 2)) {
+                e.preventDefault();
+                Toast.show('Penggunaan paste atau saran otomatis (clipboard) diblokir!', 'warning');
+                
+                // Revert ke teks sebelum di-paste
+                const prevVal = el.getAttribute('data-prev-value') || '';
+                el.value = prevVal;
+                isi = prevVal; // Jangan save teks yang di-paste
+            } else {
+                // Jika input normal, simpan nilai saat ini untuk history
+                el.setAttribute('data-prev-value', isi);
+            }
+        }
+        // ---------------------------------------------------------
         
         const ind = document.getElementById(`save-ind-${soalId}`);
         if (!ind) return;
