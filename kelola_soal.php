@@ -203,13 +203,11 @@ if (isset($_POST['add_soal'])) {
 
 // Tambah tema
 if (isset($_POST['add_tema'])) {
-    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas'] ?? ''));
-    $kelompok  = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
     $nama_tema = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
-    if ($kelompok === '' || $nama_tema === '') {
-        $pesan = "<div class='alert alert-danger'>Kelompok dan Nama Tema harus diisi.</div>";
+    if ($nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Nama Tema harus diisi.</div>";
     } else {
-        if ($conn->query("INSERT INTO tema_masalah (kelas, kelompok, nama_tema) VALUES ('$kelas', '$kelompok', '$nama_tema')")) {
+        if ($conn->query("INSERT INTO tema_masalah (kelas, kelompok, nama_tema) VALUES ('', '', '$nama_tema')")) {
             $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil ditambahkan! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
         } else {
             $pesan = "<div class='alert alert-danger'>Gagal menambahkan tema.</div>";
@@ -220,13 +218,11 @@ if (isset($_POST['add_tema'])) {
 // Edit tema
 if (isset($_POST['edit_tema'])) {
     $temaId    = intval($_POST['tema_id']);
-    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas'] ?? ''));
-    $kelompok  = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
     $nama_tema = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
-    if ($kelompok === '' || $nama_tema === '') {
-        $pesan = "<div class='alert alert-danger'>Kelompok dan Nama Tema harus diisi.</div>";
+    if ($nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Nama Tema harus diisi.</div>";
     } else {
-        if ($conn->query("UPDATE tema_masalah SET kelas='$kelas', kelompok='$kelompok', nama_tema='$nama_tema' WHERE id_tema=$temaId")) {
+        if ($conn->query("UPDATE tema_masalah SET nama_tema='$nama_tema' WHERE id_tema=$temaId")) {
             $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
         } else {
             $pesan = "<div class='alert alert-danger'>Gagal memperbarui tema.</div>";
@@ -410,25 +406,13 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
             <div class="card shadow-sm border-success mb-4">
                 <div class="card-header bg-success text-white fw-bold">Tambah Tema Soal Baru</div>
                 <div class="card-body">
-                    <form action="" method="POST" class="row g-3">
-                        <div class="col-md-2">
-                            <label class="form-label">Kelas <small class="text-muted">(opsional)</small></label>
-                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: 6B">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Kelompok Tema</label>
-                            <select name="kelompok" class="form-select" required>
-                                <option value="">-- Pilih Kelompok --</option>
-                                <option value="Masalah Utama">Masalah Utama</option>
-                                <option value="Masalah Kontemporer">Masalah Kontemporer</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
+                    <form action="" method="POST" class="row g-3 align-items-end">
+                        <div class="col">
                             <label class="form-label">Nama Tema</label>
                             <input type="text" name="nama_tema" class="form-control" placeholder="Contoh: Hukum Bayi Tabung" required>
                         </div>
-                        <div class="col-md-2 align-self-end">
-                            <button type="submit" name="add_tema" class="btn btn-success w-100">Simpan Tema Baru</button>
+                        <div class="col-auto">
+                            <button type="submit" name="add_tema" class="btn btn-success">Simpan Tema Baru</button>
                         </div>
                     </form>
                 </div>
@@ -445,8 +429,6 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center">No</th>
-                                    <th>Kelas</th>
-                                    <th>Kelompok</th>
                                     <th>Nama Tema</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
@@ -455,8 +437,6 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                             <?php foreach ($temaList as $noT => $tema): ?>
                                 <tr>
                                     <td class="text-center"><?= $noT + 1; ?></td>
-                                    <td><?= htmlspecialchars($tema['kelas']); ?></td>
-                                    <td><?= htmlspecialchars($tema['kelompok']); ?></td>
                                     <td><?= htmlspecialchars($tema['nama_tema']); ?></td>
                                     <td class="text-center">
                                         <div class="d-flex flex-wrap gap-1 justify-content-center">
@@ -471,28 +451,16 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                                     </td>
                                 </tr>
                                 <tr id="editRow<?= $tema['id_tema']; ?>" style="display:none;">
-                                    <td colspan="5">
+                                    <td colspan="3">
                                         <form action="" method="POST" class="row g-3 align-items-end">
                                             <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
-                                            <div class="col-md-2">
-                                                <label class="form-label">Kelas <small class="text-muted">(opsional)</small></label>
-                                                <input type="text" name="kelas" class="form-control"
-                                                    value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES); ?>">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Kelompok</label>
-                                                <select name="kelompok" class="form-select" required>
-                                                    <option value="Masalah Utama" <?= $tema['kelompok'] === 'Masalah Utama' ? 'selected' : ''; ?>>Masalah Utama</option>
-                                                    <option value="Masalah Kontemporer" <?= $tema['kelompok'] === 'Masalah Kontemporer' ? 'selected' : ''; ?>>Masalah Kontemporer</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-5">
+                                            <div class="col">
                                                 <label class="form-label">Nama Tema</label>
                                                 <input type="text" name="nama_tema" class="form-control"
                                                     value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES); ?>" required>
                                             </div>
-                                            <div class="col-md-2">
-                                                <button type="submit" name="edit_tema" class="btn btn-success w-100">Simpan</button>
+                                            <div class="col-auto">
+                                                <button type="submit" name="edit_tema" class="btn btn-success">Simpan</button>
                                             </div>
                                         </form>
                                     </td>
