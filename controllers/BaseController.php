@@ -65,7 +65,11 @@ abstract class BaseController
 
     protected function method(): string
     {
-        return $_SERVER['REQUEST_METHOD'];
+        $method = $_SERVER['REQUEST_METHOD'];
+        if ($method === 'POST' && isset($_GET['_method'])) {
+            return strtoupper($_GET['_method']);
+        }
+        return $method;
     }
 
     protected function param(string $key, mixed $default = null): mixed

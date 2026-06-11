@@ -29,7 +29,7 @@ const API = (() => {
     return {
         get   : (ep)           => request(ep, { method: 'GET' }),
         post  : (ep, body)     => request(ep, { method: 'POST',   body }),
-        put   : (ep, body)     => request(ep, { method: 'PUT',    body }),
-        delete: (ep)           => request(ep, { method: 'DELETE' }),
+        put   : (ep, body)     => request(ep + (ep.includes('?') ? '&' : '?') + '_method=PUT', { method: 'POST', body }),
+        delete: (ep)           => request(ep + (ep.includes('?') ? '&' : '?') + '_method=DELETE', { method: 'POST' }),
     };
 })();
