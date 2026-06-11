@@ -144,29 +144,15 @@ const App = (() => {
 
         document.getElementById('app').innerHTML = `
             <div id="mhs-shell" class="layout" style="flex-direction:column">
-                <header style="
-                    background: var(--bg-sidebar);
-                    border-bottom: 1px solid var(--border);
-                    padding: 0 32px;
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    position: sticky; top: 0; z-index: 50;">
-                    <div style="display:flex;align-items:center;gap:12px">
-                        <div style="
-                            width:36px;height:36px;
-                            background:linear-gradient(135deg,var(--accent),#8b5cf6);
-                            border-radius:8px;
-                            display:flex;align-items:center;justify-content:center;font-size:18px">
-                            🎓
-                        </div>
-                        <span style="font-weight:700;font-size:15px">Portal Tugas</span>
+                <header class="mhs-header">
+                    <div class="mhs-header-left">
+                        <div class="mhs-header-logo">🎓</div>
+                        <span class="mhs-header-brand">Portal Tugas</span>
                         ${location.hash !== '#tugas' && location.hash !== '#' && location.hash !== '' ?
-                            `<button class="btn btn-secondary btn-sm" onclick="location.hash='#tugas'" style="margin-left:8px">← Kembali</button>` : ''}
+                            `<button class="btn btn-secondary btn-sm" onclick="location.hash='#tugas'">← Kembali</button>` : ''}
                     </div>
-                    <div style="display:flex;align-items:center;gap:12px">
-                        <span style="font-size:13px;color:var(--text-secondary)">👋 ${escHtml(_user.nama)}</span>
+                    <div class="mhs-header-right">
+                        <span class="mhs-header-user" title="${escHtml(_user.nama)}">👋 ${escHtml(_user.nama)}</span>
                         <button class="btn btn-danger btn-sm" onclick="App.logout()">Logout</button>
                     </div>
                 </header>
