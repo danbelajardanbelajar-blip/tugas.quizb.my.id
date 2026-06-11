@@ -189,7 +189,9 @@ const KerjakanView = {
                                               placeholder="Ketik jawaban Anda di sini…"
                                               data-soalid="${s.id}"
                                               oninput="KerjakanView.handleInput(${s.id})"
-                                              onpaste="event.preventDefault(); Toast.show('Anda tidak diizinkan melakukan paste jawaban.', 'warning');"
+                                              onpaste="event.preventDefault(); Toast.show('Anda tidak diizinkan melakukan paste jawaban.', 'warning'); return false;"
+                                              ondrop="event.preventDefault(); return false;"
+                                              autocomplete="off" autocorrect="off" spellcheck="false"
                                               ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
                                 `;
                             }
