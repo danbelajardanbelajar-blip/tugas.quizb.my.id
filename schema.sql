@@ -3,11 +3,11 @@
 -- Jalankan file ini di MySQL untuk membuat database & tabel
 -- ================================================================
 
-CREATE DATABASE IF NOT EXISTS `tugas_db`
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
+-- CREATE DATABASE IF NOT EXISTS `quic1934_tugas`
+--    CHARACTER SET utf8mb4
+--    COLLATE utf8mb4_unicode_ci;
 
-USE `tugas_db`;
+USE `quic1934_tugas`;
 
 -- ----------------------------------------------------------------
 -- Tabel users (admin & mahasiswa)

@@ -6,7 +6,7 @@
 
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
-define('DB_NAME', 'tugas_db');
+define('DB_NAME', 'quic1934_tugas');
 define('DB_USER', 'root');      // ← ganti sesuai user MySQL Anda
 define('DB_PASS', '');           // ← ganti sesuai password MySQL Anda
 define('DB_CHARSET', 'utf8mb4');
