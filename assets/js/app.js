@@ -175,7 +175,7 @@ const App = (() => {
         `;
     }
 
-    return { init, getUser, isAdmin, logout, route, renderMahasiswaShell };
+    return { init, checkAuth, getUser, isAdmin, logout, route, renderMahasiswaShell };
 })();
 
 // ─── Bootstrap ─────────────────────────────────────────────────────
