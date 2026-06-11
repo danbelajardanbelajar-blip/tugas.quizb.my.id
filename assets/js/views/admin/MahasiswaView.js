@@ -4,6 +4,8 @@
  */
 const MahasiswaView = {
     _data: [],
+    _currentPage: 1,
+    _itemsPerPage: 10,
 
     async render() {
         const container = document.getElementById('page-container');
@@ -42,6 +44,7 @@ const MahasiswaView = {
         const res = await API.get('mahasiswa.php');
         if (!res.success) { Toast.show(res.message, 'error'); return; }
         this._data = res.data || [];
+        this._currentPage = 1;
         this.renderTable();
         this.renderStats();
     },
@@ -72,9 +75,16 @@ const MahasiswaView = {
             return;
         }
 
-        const rows = this._data.map((m, i) => `
+        const totalPages = Math.ceil(this._data.length / this._itemsPerPage);
+        if (this._currentPage > totalPages) this._currentPage = totalPages;
+        
+        const start = (this._currentPage - 1) * this._itemsPerPage;
+        const end = start + this._itemsPerPage;
+        const pagedData = this._data.slice(start, end);
+
+        const rows = pagedData.map((m, i) => `
             <tr>
-                <td style="color:var(--text-muted);font-size:12px">${i + 1}</td>
+                <td style="color:var(--text-muted);font-size:12px">${start + i + 1}</td>
                 <td><strong>${escHtml(m.username)}</strong></td>
                 <td>${escHtml(m.nama)}</td>
                 <td>
@@ -92,6 +102,21 @@ const MahasiswaView = {
                 </td>
             </tr>`).join('');
 
+        let paginationHtml = '';
+        if (totalPages > 1) {
+            paginationHtml = `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-top:1px solid var(--border);margin-top:16px;">
+                <div style="font-size:13px;color:var(--text-muted)">
+                    Menampilkan ${start + 1} - ${Math.min(end, this._data.length)} dari ${this._data.length} mahasiswa
+                </div>
+                <div style="display:flex;gap:4px">
+                    <button class="btn btn-secondary btn-sm" ${this._currentPage === 1 ? 'disabled' : ''} onclick="MahasiswaView.goToPage(${this._currentPage - 1})">← Prev</button>
+                    <span style="display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:600">${this._currentPage} / ${totalPages}</span>
+                    <button class="btn btn-secondary btn-sm" ${this._currentPage === totalPages ? 'disabled' : ''} onclick="MahasiswaView.goToPage(${this._currentPage + 1})">Next →</button>
+                </div>
+            </div>`;
+        }
+
         wrap.innerHTML = `
             <table>
                 <thead>
@@ -104,7 +129,13 @@ const MahasiswaView = {
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
-            </table>`;
+            </table>
+            ${paginationHtml}`;
+    },
+
+    goToPage(page) {
+        this._currentPage = page;
+        this.renderTable();
     },
 
     // ─── Tambah ──────────────────────────────────────────────────────
