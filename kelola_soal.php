@@ -43,11 +43,11 @@ try {
 // Muat semua tema
 $temaList = [];
 $temaMap  = [];
-$temaRes  = $conn->query("SELECT id_tema, kelas, kelompok, nama_tema FROM tema_masalah ORDER BY kelas ASC, kelompok ASC, nama_tema ASC");
+$temaRes  = $conn->query("SELECT id_tema, nama_tema FROM tema_masalah ORDER BY nama_tema ASC");
 if ($temaRes) {
     while ($temaRow = $temaRes->fetch_assoc()) {
         $temaList[] = $temaRow;
-        $temaMap[$temaRow['id_tema']] = $temaRow['kelas'] . ' | ' . $temaRow['kelompok'] . ' | ' . $temaRow['nama_tema'];
+        $temaMap[$temaRow['id_tema']] = $temaRow['nama_tema'];
     }
 }
 
@@ -119,7 +119,7 @@ $resJwb = $conn->query("
             ) / 17
            ) * 100, 1) AS jawaban_terisi_percent,
            u.nama_lengkap, u.kelas AS kelas_user,
-           tm.nama_tema, tm.kelompok AS kelompok_tema, tm.kelas AS kelas_tema
+           tm.nama_tema
     FROM tb_soal ts
     LEFT JOIN `user` u ON u.username COLLATE utf8mb4_unicode_ci = ts.nama_mahasiswa
     LEFT JOIN tema_masalah tm ON tm.id_tema = ts.tema_id
@@ -144,8 +144,6 @@ if ($resJwb) {
             $rj['nama_lengkap'] = $namaMap[$nim] ?? '';
             $rj['kelas_user']   = $kelasMap[$nim] ?? '';
             $rj['nama_tema']    = '';
-            $rj['kelompok_tema']= '';
-            $rj['kelas_tema']   = '';
             $semuaJawaban[] = $rj;
         }
     }
@@ -620,10 +618,7 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                                     </td>
                                     <td>
                                         <?php if (!empty($r['nama_tema'])): ?>
-                                            <?= htmlspecialchars($r['nama_tema']); ?><br>
-                                            <small class="text-muted">
-                                                <?= htmlspecialchars($r['kelas_tema'] . ' &middot; ' . $r['kelompok_tema']); ?>
-                                            </small>
+                                            <?= htmlspecialchars($r['nama_tema']); ?>
                                         <?php else: ?>
                                             <span class="text-muted fst-italic">Tidak tercatat</span>
                                         <?php endif; ?>
@@ -680,9 +675,6 @@ foreach ($semuaJawaban as $r):
                 <?php if (!empty($r['nama_tema'])): ?>
                 <div class="alert alert-info py-2 mb-3">
                     <strong>Tema:</strong> <?= htmlspecialchars($r['nama_tema']); ?>
-                    <?php if (!empty($r['kelas_tema']) || !empty($r['kelompok_tema'])): ?>
-                        &nbsp;&middot;&nbsp;<small>Kelas <?= htmlspecialchars($r['kelas_tema']); ?> &middot; <?= htmlspecialchars($r['kelompok_tema']); ?></small>
-                    <?php endif; ?>
                     <span class="badge bg-success ms-2">Terisi <?= $answeredCount; ?>/<?= $totalQuestions; ?> (<?= $percent; ?>%)</span>
                 </div>
                 <?php else: ?>
