@@ -203,11 +203,11 @@ if (isset($_POST['add_soal'])) {
 
 // Tambah tema
 if (isset($_POST['add_tema'])) {
-    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas']));
+    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas'] ?? ''));
     $kelompok  = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
     $nama_tema = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
-    if ($kelas === '' || $kelompok === '' || $nama_tema === '') {
-        $pesan = "<div class='alert alert-danger'>Semua field harus diisi.</div>";
+    if ($kelompok === '' || $nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Kelompok dan Nama Tema harus diisi.</div>";
     } else {
         if ($conn->query("INSERT INTO tema_masalah (kelas, kelompok, nama_tema) VALUES ('$kelas', '$kelompok', '$nama_tema')")) {
             $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil ditambahkan! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
@@ -220,11 +220,11 @@ if (isset($_POST['add_tema'])) {
 // Edit tema
 if (isset($_POST['edit_tema'])) {
     $temaId    = intval($_POST['tema_id']);
-    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas']));
+    $kelas     = mysqli_real_escape_string($conn, trim($_POST['kelas'] ?? ''));
     $kelompok  = mysqli_real_escape_string($conn, trim($_POST['kelompok']));
     $nama_tema = mysqli_real_escape_string($conn, trim($_POST['nama_tema']));
-    if ($kelas === '' || $kelompok === '' || $nama_tema === '') {
-        $pesan = "<div class='alert alert-danger'>Semua field harus diisi.</div>";
+    if ($kelompok === '' || $nama_tema === '') {
+        $pesan = "<div class='alert alert-danger'>Kelompok dan Nama Tema harus diisi.</div>";
     } else {
         if ($conn->query("UPDATE tema_masalah SET kelas='$kelas', kelompok='$kelompok', nama_tema='$nama_tema' WHERE id_tema=$temaId")) {
             $pesan = "<div class='alert alert-success alert-dismissible fade show'>Tema berhasil diperbarui! <button type='button' class='btn-close' data-bs-dismiss='alert'></button></div>";
@@ -411,9 +411,9 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                 <div class="card-header bg-success text-white fw-bold">Tambah Tema Soal Baru</div>
                 <div class="card-body">
                     <form action="" method="POST" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Kelas</label>
-                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: 6B" required>
+                        <div class="col-md-2">
+                            <label class="form-label">Kelas <small class="text-muted">(opsional)</small></label>
+                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: 6B">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Kelompok Tema</label>
@@ -423,12 +423,12 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                                 <option value="Masalah Kontemporer">Masalah Kontemporer</option>
                             </select>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label">Nama Tema</label>
                             <input type="text" name="nama_tema" class="form-control" placeholder="Contoh: Hukum Bayi Tabung" required>
                         </div>
-                        <div class="col-12">
-                            <button type="submit" name="add_tema" class="btn btn-success">Simpan Tema Baru</button>
+                        <div class="col-md-2 align-self-end">
+                            <button type="submit" name="add_tema" class="btn btn-success w-100">Simpan Tema Baru</button>
                         </div>
                     </form>
                 </div>
@@ -475,18 +475,18 @@ if ($rt) { while ($rw = $rt->fetch_assoc()) { $opsiType[] = $rw['type_tugas']; }
                                         <form action="" method="POST" class="row g-3 align-items-end">
                                             <input type="hidden" name="tema_id" value="<?= $tema['id_tema']; ?>">
                                             <div class="col-md-2">
-                                                <label class="form-label">Kelas</label>
+                                                <label class="form-label">Kelas <small class="text-muted">(opsional)</small></label>
                                                 <input type="text" name="kelas" class="form-control"
-                                                    value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES); ?>" required>
+                                                    value="<?= htmlspecialchars($tema['kelas'], ENT_QUOTES); ?>">
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Kelompok</label>
                                                 <select name="kelompok" class="form-select" required>
                                                     <option value="Masalah Utama" <?= $tema['kelompok'] === 'Masalah Utama' ? 'selected' : ''; ?>>Masalah Utama</option>
                                                     <option value="Masalah Kontemporer" <?= $tema['kelompok'] === 'Masalah Kontemporer' ? 'selected' : ''; ?>>Masalah Kontemporer</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-5">
                                                 <label class="form-label">Nama Tema</label>
                                                 <input type="text" name="nama_tema" class="form-control"
                                                     value="<?= htmlspecialchars($tema['nama_tema'], ENT_QUOTES); ?>" required>
