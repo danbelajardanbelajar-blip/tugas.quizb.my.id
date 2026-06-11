@@ -216,12 +216,15 @@ const MahasiswaView = {
     // ─── Import Excel ────────────────────────────────────────────────
     openImport() {
         Modal.open('📥 Import Mahasiswa dari Excel',
-            `<div class="dropzone" id="dropzone" onclick="document.getElementById('excel-file-input').click()">
+            `<div style="text-align: right; margin-bottom: 12px;">
+                <a href="Template_Mahasiswa.csv" download class="btn btn-secondary btn-sm" style="text-decoration: none; display: inline-block;">⬇️ Download Template (.csv)</a>
+            </div>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('excel-file-input').click()">
                 <div class="dropzone-icon">📊</div>
                 <div class="dropzone-label">Klik atau seret file Excel ke sini</div>
-                <div class="dropzone-hint">Format: .xlsx — Kolom wajib: <strong>id</strong>, <strong>nama</strong>, <strong>kelas</strong></div>
+                <div class="dropzone-hint">Format: .xlsx atau .csv — Kolom wajib: <strong>id (NIM)</strong>, <strong>nama</strong>, <strong>kelas</strong></div>
             </div>
-            <input type="file" id="excel-file-input" accept=".xlsx,.xls">
+            <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv">
             <div id="import-preview"></div>`,
             `<button class="btn btn-secondary" onclick="Modal.close()">Batal</button>
              <button class="btn btn-primary hidden" id="btn-do-import">📥 Import Sekarang</button>`
