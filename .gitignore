@@ -3,3 +3,16 @@ uploads/
 
 # Ignore PHP error log if present
 error_log
+php_errors.log
+
+# Composer (jika nanti menggunakan vendor)
+vendor/
+composer.phar
+
+# Konfigurasi Database (agar password tidak ikut ter-commit ke GitHub)
+# (Opsional: hilangkan tanda pagar di bawah jika tidak ingin database.php terupload)
+# config/database.php
+
+# OS generated files
+.DS_Store
+Thumbs.db
