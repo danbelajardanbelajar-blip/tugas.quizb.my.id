@@ -185,7 +185,7 @@ const MahasiswaView = {
 
     // ─── Edit ────────────────────────────────────────────────────────
     openEdit(id) {
-        const m = this._data.find(x => x.id === id);
+        const m = this._data.find(x => x.id == id);
         if (!m) return;
         Modal.open('✏️ Edit Mahasiswa',
             `<div class="form-group">

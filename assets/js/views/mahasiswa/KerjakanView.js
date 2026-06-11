@@ -106,7 +106,7 @@ const KerjakanView = {
     },
 
     switchTema(temaId) {
-        if (this._activeTemaId === temaId) return;
+        if (this._activeTemaId == temaId) return;
         this._activeTemaId = temaId;
         this.renderSidebar();
         this.renderSoal();
@@ -200,7 +200,7 @@ const KerjakanView = {
             const res = await API.post('jawaban.php?action=submit', { soal_id: soalId, isi });
             if (res.success) {
                 // Update local data array
-                const ex = this._jawaban.find(x => x.soal_id === soalId);
+                const ex = this._jawaban.find(x => x.soal_id == soalId);
                 if (ex) ex.isi = isi;
                 else this._jawaban.push({ soal_id: soalId, isi });
 

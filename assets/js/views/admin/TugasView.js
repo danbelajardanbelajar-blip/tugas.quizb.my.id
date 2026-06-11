@@ -264,7 +264,7 @@ const TugasView = {
     },
 
     openEditTugas(id) {
-        const t = this._tugasList.find(x => x.id === id);
+        const t = this._tugasList.find(x => x.id == id);
         if (!t) return;
         Modal.open('✏️ Edit Tugas',
             `<div class="form-group">
@@ -358,7 +358,7 @@ const TugasView = {
     },
 
     openEditTema(temaId) {
-        const tm = this._currentTugas.temas.find(x => x.id === temaId);
+        const tm = this._currentTugas.temas.find(x => x.id == temaId);
         if (!tm) return;
         Modal.open('✏️ Edit Tema',
             `<div class="form-group">
@@ -430,7 +430,7 @@ const TugasView = {
     openEditSoal(soalId) {
         let soal = null;
         for (const tm of this._currentTugas.temas || []) {
-            soal = (tm.soals || []).find(s => s.id === soalId);
+            soal = (tm.soals || []).find(s => s.id == soalId);
             if (soal) break;
         }
         if (!soal) return;

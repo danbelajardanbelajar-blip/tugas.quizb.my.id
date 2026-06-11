@@ -95,7 +95,7 @@ const RekapView = {
 
     // ─── Level 2: Daftar mahasiswa yang mengerjakan tema ────────────
     async showMahasiswaList(temaId) {
-        const tema = this._temas.find(t => t.id === temaId);
+        const tema = this._temas.find(t => t.id == temaId);
         this._selectedTema = tema;
 
         const el = document.getElementById('rekap-content');
