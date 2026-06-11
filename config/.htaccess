@@ -1,0 +1,4 @@
+<?php
+// config/.htaccess — Blokir akses langsung ke folder config
+Order deny,allow
+Deny from all
