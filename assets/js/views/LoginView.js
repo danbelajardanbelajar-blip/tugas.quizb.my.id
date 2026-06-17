@@ -28,10 +28,6 @@ const LoginView = {
                     </button>
                 </form>
 
-                <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted)">
-                    Admin: <strong>admin</strong> / <strong>admin123</strong><br>
-                    Mahasiswa: NIM sebagai username &amp; password
-                </p>
             </div>
         </div>`;
     },
