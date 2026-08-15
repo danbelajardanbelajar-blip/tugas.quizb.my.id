@@ -46,7 +46,7 @@ class MahasiswaController extends BaseController
         $data  = $this->getBody();
         $nim   = trim($data['nim']   ?? '');
         $nama  = trim($data['nama']  ?? '');
-        $kelas = trim($data['kelas'] ?? '');
+        $kelas = $data['kelas_id'] ?? null;
 
         if (!$nim || !$nama) $this->error('NIM dan nama wajib diisi');
         if ($this->userModel->findByUsername($nim)) $this->error('NIM sudah terdaftar');
@@ -56,7 +56,7 @@ class MahasiswaController extends BaseController
             'password' => $nim,
             'role'     => 'mahasiswa',
             'nama'     => $nama,
-            'kelas'    => $kelas,
+            'kelas_id' => $kelas,
         ]);
         $this->success(['id' => $id], 'Mahasiswa berhasil ditambahkan');
     }
@@ -77,7 +77,7 @@ class MahasiswaController extends BaseController
         $this->userModel->update($id, [
             'username' => $data['nim']   ?? null,
             'nama'     => $data['nama']  ?? null,
-            'kelas'    => $data['kelas'] ?? null,
+            'kelas_id' => $data['kelas_id'] ?? null,
         ]);
         $this->success(null, 'Data mahasiswa berhasil diperbarui');
     }

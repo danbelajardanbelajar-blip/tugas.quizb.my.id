@@ -30,11 +30,12 @@ CREATE TABLE IF NOT EXISTS `users` (
     `password`   VARCHAR(255) NOT NULL,
     `role`       ENUM('admin','mahasiswa') NOT NULL DEFAULT 'mahasiswa',
     `nama`       VARCHAR(100) NOT NULL,
-    `kelas`      VARCHAR(20)  NULL COMMENT 'Hanya untuk mahasiswa',
+    `kelas_id`   INT          NULL COMMENT 'Relasi ke tabel kelas',
     `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_username` (`username`)
+    UNIQUE KEY `uq_username` (`username`),
+    CONSTRAINT `fk_users_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------

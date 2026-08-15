@@ -460,7 +460,7 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `role` enum('admin','mahasiswa') NOT NULL DEFAULT 'mahasiswa',
   `nama` varchar(100) NOT NULL,
-  `kelas` varchar(20) DEFAULT NULL COMMENT 'Hanya untuk mahasiswa',
+  `kelas_id` int(11) DEFAULT NULL COMMENT 'Hanya untuk mahasiswa',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -469,69 +469,7 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `role`, `nama`, `kelas`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '$2y$10$FYl.aYEyyvQS2r2ITKtiYeO3O6uT875qH.lhJ/WhRU7XUyzb17mya', 'admin', 'Administrator', NULL, '2026-06-11 03:22:41', '2026-06-11 03:30:26'),
-(2, '23051021', '$2y$10$JiAKjig.n4pranWcpzS8hexYRUwO72QpjGIwGVQtA9jVdKh09p5v6', 'mahasiswa', 'ahmad dhiya uddin nabhan', '6B', '2026-06-11 03:43:50', '2026-06-11 03:43:50'),
-(3, '23051023', '$2y$10$qyzHEFkG1/Z8HPpslLQW9OYKLgs8vthXp60oXILlJCYGq9eIK3WV.', 'mahasiswa', 'Ahmad Fakhrusy syakirin Al Haqiqi', '6B', '2026-06-11 03:43:50', '2026-06-11 03:43:50'),
-(4, '23051034', '$2y$10$rdQeQ6oCVFz9Q9.vpBSS8Ov0P5Vjw6nYKvF2Mu5GgLTbuILV5DQAa', 'mahasiswa', 'MOH. SABIQ ANNAUWAL', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(5, '23051035', '$2y$10$OMdaUThYWKnBMzMR9mvgle6TNmVCT9wslVOvQv7o9qp1ovkTIBJcS', 'mahasiswa', 'MUH.SYAHRUL RAMADHAN', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(6, '23051036', '$2y$10$hjagjHNPfx3sXQtBjhb8qekD396dwwld4qBR9K4N1jJrtivv75SU6', 'mahasiswa', 'MOHAMMAD ARJU SYAFA', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(7, '23051037', '$2y$10$mAQRFjGEKMDjtumnjtF0COYcKEs/p6wChj3I..yjIB80ZKhrhy4wa', 'mahasiswa', 'HIDAYATUN NI\'MAH', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(8, '23051040', '$2y$10$kUo4tv6fVPtlw8bEXyVcGeiu.0QjCMZSDT/ZfjMAQDQHr4BlVr9CO', 'mahasiswa', 'OLIVIA MAULIDATUR ROHMA', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(9, '23051041', '$2y$10$7NzobcF6mfJqBnC5KcqFAeLwRHe/6.aJ16tjk05j.1VovHm2YyM42', 'mahasiswa', 'FATIMATUZ ZAHRO', '6B', '2026-06-11 03:43:51', '2026-06-11 03:43:51'),
-(10, '23051042', '$2y$10$9lqCUPM2JpjgV0dAliMoxeuGLCaWH4cbhpjxAPV48TXzItVfLgJ5S', 'mahasiswa', 'ROSIKHOTUN NADIYAH', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(11, '23051043', '$2y$10$/gtxxKVkutWUDRPI/PBRyODsZjYDMevxi2SpUzIax5HUT5b.RBNRq', 'mahasiswa', 'Nabilah shouniyah', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(12, '23051044', '$2y$10$Mf.J2dS2r8Sm43gHI1LwveSlq5pQZQ6bFIBJE/LHyvAWT2cdUOTr.', 'mahasiswa', 'MAFTUKHAH', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(13, '23051047', '$2y$10$KmJEcTd5Nm9yXuoYk5.X9e6r.oBDuVoF6.aQ/WRU44SUE9kqqvx1u', 'mahasiswa', 'AHMAD UMAR SYARIFUDDIN', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(14, '23051048', '$2y$10$ALJOeXr3vWE7tWMZOpgMwehPi6TgFLxFzDKhfnXm4hXTsta.NaDay', 'mahasiswa', 'GITA DWI NUR AINI', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(15, '23051049', '$2y$10$DhVOo/Dg4re0m0aDJE6.Qe5KoHM3ANvoKyHIVDO3kKV/nH0FuvQ7q', 'mahasiswa', 'RIFTA AMALIYA KHOIRUN NISA\'', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(16, '23051050', '$2y$10$1/SmGPUe6qe4L9LJt2iZu.NiFSKpJwMLX2vlesXszVkFo1aEXaKwS', 'mahasiswa', 'BAGUS RIZKY SAPUTRA', '6B', '2026-06-11 03:43:52', '2026-06-11 03:43:52'),
-(17, '23051053', '$2y$10$VS9bYb2C6n9PiYlV4ogjP.3aRaRCBvTnxHyvtGCJtgmepKuyTo21m', 'mahasiswa', 'AHMAD WAHYUDIN TAMAMI', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(18, '23051066', '$2y$10$fg3sC3DxuTYJxwil3NiHreMM3d.97S4/B702MB7P7XWZDjDl9TG9O', 'mahasiswa', 'Yogi Noviana', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(19, '23051076', '$2y$10$v6v5TvKhL2dBBn2w2ivQHu9weXaPShSngbi.RFaV/WYfMJVEAgkPC', 'mahasiswa', 'Moch. Barik Shohibun Ni\'am', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(20, '23051078', '$2y$10$RPJ8YhLwdo3za4pjUa3nC.7Q9sKBWa53AnhA3kiTfJh8XciNCkOoW', 'mahasiswa', 'KINANTI LADYSA IMANIAR', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(21, '23051081', '$2y$10$xuv25pG7/hnheQ31Cf8wRuILIXa8Vqm9NWCbaNH.KjQqznP4fmFJK', 'mahasiswa', 'NAUROTUN WAFIYAH', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(22, '23051086', '$2y$10$rE/SXxqR7ybk0hS8Ouwr9ug7SzRhUrQ5.L8lBWH4RRLH8cVtFoxIe', 'mahasiswa', 'LISTRI CAHYATI', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(23, '23051141', '$2y$10$wKiFvMkKJ6g6BpcWRYZ15u9yWdlC8bXQDFipN5G9HzlBBoQVQc6Kq', 'mahasiswa', 'MUHAMMAD FARIZI AL LATIEF', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(24, '23051150', '$2y$10$b4/HCPd6QEFQkuIBTIAg.e9OfRANqJHUPI6hb912x.qPsFK0acRI.', 'mahasiswa', 'ALFI ARDILLA', '6B', '2026-06-11 03:43:53', '2026-06-11 03:43:53'),
-(25, '23051157', '$2y$10$Qep12QONWIEtEegsUt.8TOY8RMaPxveeFoLg1PBo45JrtH4mU3Iee', 'mahasiswa', 'Sukron ma\'mun', '6B', '2026-06-11 03:43:54', '2026-06-11 03:43:54'),
-(26, '23051054', '$2y$10$BiLLeKU9VZ39hdHGqf5m.OIJR2jhKL/HIzx0Vsl6V1BFupf7Q0GG2', 'mahasiswa', 'Ahmad Muzayyan Abul Aula', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(27, '23051068', '$2y$10$KtLLXTOacy58TNRapMnPHexB/1GG8fYyP/T/rJ6mraAipGuhzfrru', 'mahasiswa', 'Zuni jumanasari', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(28, '23051069', '$2y$10$yhP.6rF8C.kIC8tU/wgbxetzneX2UfxFs.mymSSkK5vJupbmWHaSC', 'mahasiswa', 'NICHDAH ROICHATUL JANNAH', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(29, '23051080', '$2y$10$rIOlhgJygYhlR3P0UyNMgO3AIWImMYNFuoBU0ObqeNz.6NUs2MQse', 'mahasiswa', 'Isnaini Alifatur Rohmah', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(30, '23051087', '$2y$10$GDw8o5JfB4XFRbdaxIb7I.H/TWWvNj8g9nNrMLDnWTNlplfteSfeW', 'mahasiswa', 'Widiya Arini Rahmawati', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(31, '23051096', '$2y$10$ibUg3AHQw4Nh/ihiIy7W6uK9zI5UVaP0fEWqoIuTWcWHBjufBU/3y', 'mahasiswa', 'HIMMATUL FITRIA', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(32, '23051102', '$2y$10$YLRYNhe.97K/zwIIvhIgpOBXc2MBtE0.VRh.FJSq563KC8xOdf592', 'mahasiswa', 'Fatimatul hidayah', '6C', '2026-06-11 03:44:48', '2026-06-11 03:44:48'),
-(33, '23051105', '$2y$10$PAhokml.wvpV0KS8jm0Ycu.gdaPIM3WV.8O1C2Tl95I13Z726i2FC', 'mahasiswa', 'BETTY RACHMADHANY', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(34, '23051107', '$2y$10$zu1n4Mw65UG4h4qyd/.rve6ihJ2mM.AWFi8EjhI28tEcsbDf6Ghfi', 'mahasiswa', 'FRIPDA BAGUS SETIAWAN', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(35, '23051108', '$2y$10$eKtDMRxclhewIQBg7SA7.O6A4vRDigUAlCff.7Ekj9iB1jHZxAsT2', 'mahasiswa', 'MOH. FAJAR ALFIANSYAH', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(36, '23051111', '$2y$10$cjUjqnxshNiS4lambKXivOD5rr/7Ub7eVl.al8YLYxRDOnYHDvbBi', 'mahasiswa', 'PUTRI AVNITA MAHFUDZOH', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(37, '23051114', '$2y$10$89ydMkTLNyVJAp9qskVfz.Xzp8aXYKXLgygHmLnrVZCheXxMlmnyq', 'mahasiswa', 'MUHAMMAD IZAL FAIZIN', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(38, '23051115', '$2y$10$rUCwNFBzc0SWQwQug.9Ia.Zj0tW5/uW2z/YShg4TpJgJhlPolCCjW', 'mahasiswa', 'IHDINATUL JANNAH', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(39, '23051118', '$2y$10$GI2AxEEOjy9eniBhW5IaDexyeaffMZrw1ee7N0To6Y8aGQlBhCV1q', 'mahasiswa', 'putri isnaini', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(40, '23051122', '$2y$10$YcB/YLie.O.cPtkQje.KGuLQDNB/qnXwWkXsYW1k2wFHOSvpG7Bei', 'mahasiswa', 'Nela Yusnita Anggraeni', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(41, '23051129', '$2y$10$COMT.HFnn7bm9/rjw2BgC.nLjclhrVHVVQakZdUYTGepuClvRNsjy', 'mahasiswa', 'AHMAD ZAINAL AZKY', '6C', '2026-06-11 03:44:49', '2026-06-11 03:44:49'),
-(42, '23051130', '$2y$10$7Jz7jnZrMnFnPM5AnRmEqeDbB35.LZzxxnCoIXkJDe6fDDHuF0Y5.', 'mahasiswa', 'Nabilah Arifah El-zahra', '6C', '2026-06-11 03:44:50', '2026-06-11 03:44:50'),
-(43, '23051132', '$2y$10$nTYGp.Y..GkQqJEcJbnGRuF0JA7g6GauQQQuHGkxuExfeNE3mEp7u', 'mahasiswa', 'SITI NUR NIKMATUL ZAENAB', '6C', '2026-06-11 03:44:50', '2026-06-11 03:44:50'),
-(44, '23051133', '$2y$10$w1LMt1t21.a3mmtn.M/URea7gb7t/Z.WGKoS.cpzSXKTTiQa80Ude', 'mahasiswa', 'Khofifah', '6C', '2026-06-11 03:44:50', '2026-06-11 03:44:50'),
-(45, '23051135', '$2y$10$EF0yiWhOibZDvKGnZDC9MOGrqXG7fxzqs0IMn0oKjFditrYPtiHkW', 'mahasiswa', 'AHMAD NUR SIDDIQI', '6C', '2026-06-11 03:44:50', '2026-06-11 03:44:50'),
-(46, '23051138', '$2y$10$nd/9rnCd.ZPoQg.HJLvtmeBTsjq37fenStpGGJ.U3nD3o5VTp8Yla', 'mahasiswa', 'SYAFIRA NISAUL ABDILLAH', '6C', '2026-06-11 03:44:50', '2026-06-11 03:44:50'),
-(47, '23051142', '$2y$10$JsfhvtZSOU773zFIBE92XesGpFIqMzPcwXCX7D87lu4BqQKCSPmra', 'mahasiswa', 'Muthi\'a Nafisatun Najwa', '6C', '2026-06-11 03:44:51', '2026-06-11 03:44:51'),
-(48, '23051146', '$2y$10$ph0LAaiyEAOFS0WCl9.Xc.kxEngFmLpqbWJyEwDgcyd9LKhyb7JCK', 'mahasiswa', 'TUKHIBAH NUR RIZQIA', '6C', '2026-06-11 03:44:51', '2026-06-11 03:44:51'),
-(49, '23051152', '$2y$10$2wwCM7kr8cbSrqCBfn0Da.0i/nxg/1R0S9mhwEAIf.Xmv/VH5JCTC', 'mahasiswa', 'RIZKIYAH FITROTUN NISA\'', '6C', '2026-06-11 03:44:51', '2026-06-11 03:44:51'),
-(50, '23051154', '$2y$10$X6QRg.5blKx1Xny.nuc3N.fmv4qKR5TUSia1sPvuSvfAK0xtoQPCG', 'mahasiswa', 'Amanda rifqiyah', '6C', '2026-06-11 03:44:51', '2026-06-11 03:44:51'),
-(51, '23051158', '$2y$10$yKtHEAcgpS8n.WFw.3RCDeoq0rQVD1DoNX69rOl8V4pUCAnIwdFXe', 'mahasiswa', 'Rani Rusdiana', '6C', '2026-06-11 03:44:51', '2026-06-11 03:44:51'),
-(52, '23051159', '$2y$10$5kSfFApaxGBlFuPBfhQ/6.vy0mbMxiVk5GEpdTPgPKRL.jMSapXEC', 'mahasiswa', 'Ainun nabila', '6C', '2026-06-11 03:44:52', '2026-06-11 03:44:52'),
-(53, '2026010', '$2y$10$x1TTSJKbAWWiusDPqrkas.AN7pz.P.Q2x9zqEy0Ng0Mkl9IMJCerK', 'mahasiswa', 'QADRI ALIF MULIAWAN', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(54, '2026011', '$2y$10$ibjgnMtjgjTZZ1yPnaLFgui.c3QkP629Zv9o6lXZonNo2jrDHe3cy', 'mahasiswa', 'REINA', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(55, '2026012', '$2y$10$W6n4J2CFidMI2O1TYkJ4UOREmyyP8Uw27dD54mIfRHlOiWDK7XDfC', 'mahasiswa', 'NILA MAULIDIA', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(56, '2026013', '$2y$10$oYytoRaCJpTih03TYCMHG.9XeTEXf2bldc7wWt7z1BZ9nSFJCi6t.', 'mahasiswa', 'YUDI AFRIANTO', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(57, '2026014', '$2y$10$4R9grgaUxU66GWsvHwFJwuZhV2OtlBZECHWRQdaobKM04Um1rnpM2', 'mahasiswa', 'MUHAMMAD CHANDRA', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(58, '2026015', '$2y$10$UQHGO1SDeMuk8anj8m03tOCzDAxaLL31ZBYPYc7tcKjOifqqrgGTy', 'mahasiswa', 'AIDIL YAHYA', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(59, '2026016', '$2y$10$GZYW7FvH7x.SFIOmywUktus//JKlBa46I/GuJ6DPDZ4n0I5FIl0T6', 'mahasiswa', 'KIA FARHAN AT THORIQ', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(60, '2026017', '$2y$10$.DCFA4eEid6kMiHM0a5EtuJ801LP2bDQJwvY7lFIwct3/CqpW9BUy', 'mahasiswa', 'THIN ZAKIAH KULMA', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(61, '2026018', '$2y$10$Ml0H3G6pufSShKt9GayVHeWUtkuFK7Dz3GGZEavgKsUtQdfi0rBO2', 'mahasiswa', 'MUHAMMAD RISKY WAHYUDI', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45'),
-(62, '2026019', '$2y$10$F8WSVokB2VxOIsTp8Mlarermrs8FG7mmsMkAdCxhi7JeUjWJgl/em', 'mahasiswa', 'MUHAMMAD QODRI', 'PAI-DN-1', '2026-08-15 15:20:45', '2026-08-15 15:20:45');
+
 
 --
 -- Indexes for dumped tables
@@ -555,6 +493,9 @@ ALTER TABLE `kelas`
 --
 -- Indexes for table `soal`
 --
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL;
+
 ALTER TABLE `soal`
   ADD PRIMARY KEY (`id`),
   ADD KEY `tema_id` (`tema_id`);
@@ -577,7 +518,8 @@ ALTER TABLE `tugas`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_username` (`username`);
+  ADD UNIQUE KEY `uq_username` (`username`),
+  ADD KEY `fk_users_kelas` (`kelas_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -598,6 +540,9 @@ ALTER TABLE `kelas`
 --
 -- AUTO_INCREMENT for table `soal`
 --
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL;
+
 ALTER TABLE `soal`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
@@ -633,6 +578,9 @@ ALTER TABLE `jawaban`
 --
 -- Constraints for table `soal`
 --
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL;
+
 ALTER TABLE `soal`
   ADD CONSTRAINT `soal_ibfk_1` FOREIGN KEY (`tema_id`) REFERENCES `tema` (`id`) ON DELETE CASCADE;
 

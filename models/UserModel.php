@@ -24,21 +24,28 @@ class UserModel extends BaseModel
     // ------------------------------------------------------------------
     public function getAllMahasiswa(): array
     {
-        return $this->findAll("role = 'mahasiswa'", [], 'nama ASC');
+        $stmt = $this->pdo->query("
+            SELECT u.*, k.nama as kelas_nama 
+            FROM users u 
+            LEFT JOIN kelas k ON u.kelas_id = k.id 
+            WHERE u.role = 'mahasiswa' 
+            ORDER BY u.nama ASC
+        ");
+        return $stmt->fetchAll();
     }
 
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, password, role, nama, kelas)
-            VALUES (:username, :password, :role, :nama, :kelas)
+            INSERT INTO users (username, password, role, nama, kelas_id)
+            VALUES (:username, :password, :role, :nama, :kelas_id)
         ");
         $stmt->execute([
             ':username' => $data['username'],
             ':password' => password_hash($data['password'], PASSWORD_DEFAULT),
             ':role'     => $data['role'] ?? 'mahasiswa',
             ':nama'     => $data['nama'],
-            ':kelas'    => $data['kelas'] ?? null,
+            ':kelas_id' => !empty($data['kelas_id']) ? (int)$data['kelas_id'] : null,
         ]);
         return (int) $this->pdo->lastInsertId();
     }
@@ -52,9 +59,9 @@ class UserModel extends BaseModel
             $fields[] = 'nama = ?';
             $params[] = $data['nama'];
         }
-        if (array_key_exists('kelas', $data)) {
-            $fields[] = 'kelas = ?';
-            $params[] = $data['kelas'];
+        if (array_key_exists('kelas_id', $data)) {
+            $fields[] = 'kelas_id = ?';
+            $params[] = !empty($data['kelas_id']) ? (int)$data['kelas_id'] : null;
         }
         if (!empty($data['username'])) {
             $fields[] = 'username = ?';
@@ -78,17 +85,29 @@ class UserModel extends BaseModel
     // ------------------------------------------------------------------
     public function importBatch(array $rows): int
     {
+        // To handle class matching from excel string (e.g., '6B') to ID, we need to map them first
+        $stmtKelas = $this->pdo->query("SELECT id, nama FROM kelas");
+        $kelasMap = [];
+        foreach ($stmtKelas->fetchAll() as $k) {
+            $kelasMap[strtolower(trim($k['nama']))] = $k['id'];
+        }
+
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, password, role, nama, kelas)
-            VALUES (:username, :password, 'mahasiswa', :nama, :kelas)
-            ON DUPLICATE KEY UPDATE nama = VALUES(nama), kelas = VALUES(kelas)
+            INSERT INTO users (username, password, role, nama, kelas_id)
+            VALUES (:username, :password, 'mahasiswa', :nama, :kelas_id)
+            ON DUPLICATE KEY UPDATE nama = VALUES(nama), kelas_id = VALUES(kelas_id)
         ");
 
         $count = 0;
         foreach ($rows as $row) {
             $nim   = trim((string)($row['id'] ?? $row['nim'] ?? ''));
             $nama  = trim((string)($row['nama']  ?? ''));
-            $kelas = trim((string)($row['kelas'] ?? ''));
+            $kelasStr = trim((string)($row['kelas'] ?? ''));
+            
+            $kelasId = null;
+            if ($kelasStr !== '' && isset($kelasMap[strtolower($kelasStr)])) {
+                $kelasId = $kelasMap[strtolower($kelasStr)];
+            }
 
             if (!$nim || !$nama) continue;
 
@@ -96,7 +115,7 @@ class UserModel extends BaseModel
                 ':username' => $nim,
                 ':password' => password_hash($nim, PASSWORD_DEFAULT),
                 ':nama'     => $nama,
-                ':kelas'    => $kelas,
+                ':kelas_id' => $kelasId,
             ]);
             $count++;
         }

@@ -53,7 +53,7 @@
      JAVASCRIPT — VIEWS
      ========================================================= -->
 <script src="assets/js/views/LoginView.js"></script>
-<script src="assets/js/views/admin/MahasiswaView.js?v=3"></script>
+<script src="assets/js/views/admin/MahasiswaView.js?v=4"></script>
 <script src="assets/js/views/admin/KelasView.js?v=3"></script>
 <script src="assets/js/views/admin/TugasView.js"></script>
 <script src="assets/js/views/admin/RekapView.js"></script>

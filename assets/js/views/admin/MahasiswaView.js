@@ -4,6 +4,7 @@
  */
 const MahasiswaView = {
     _data: [],
+    _kelas: [],
     _currentPage: 1,
     _itemsPerPage: 10,
 
@@ -37,6 +38,13 @@ const MahasiswaView = {
                     </div>
                 </div>
             </div>`;
+        
+        // Fetch kelas for dropdowns
+        const resKelas = await API.get('kelas.php?action=list');
+        if (resKelas.success) {
+            this._kelas = resKelas.data || [];
+        }
+        
         await this.loadData();
     },
 
@@ -50,7 +58,7 @@ const MahasiswaView = {
     },
 
     renderStats() {
-        const klases = [...new Set(this._data.map(m => m.kelas).filter(Boolean))];
+        const klases = [...new Set(this._data.map(m => m.kelas_nama).filter(Boolean))];
         document.getElementById('mhs-stats').innerHTML = `
             <div class="stat-card">
                 <div class="stat-label">Total Mahasiswa</div>
@@ -88,8 +96,8 @@ const MahasiswaView = {
                 <td><strong>${escHtml(m.username)}</strong></td>
                 <td>${escHtml(m.nama)}</td>
                 <td>
-                    ${m.kelas
-                        ? `<span class="badge badge-primary">${escHtml(m.kelas)}</span>`
+                    ${m.kelas_nama
+                        ? `<span class="badge badge-primary">${escHtml(m.kelas_nama)}</span>`
                         : `<span class="text-muted text-sm">—</span>`}
                 </td>
                 <td>
@@ -138,6 +146,15 @@ const MahasiswaView = {
         this.renderTable();
     },
 
+    getKelasOptionsHTML(selectedId = null) {
+        let html = '<option value="">-- Pilih Kelas --</option>';
+        this._kelas.forEach(k => {
+            const selected = (k.id == selectedId) ? 'selected' : '';
+            html += `<option value="${k.id}" ${selected}>${escHtml(k.nama)}</option>`;
+        });
+        return html;
+    },
+
     // ─── Tambah ──────────────────────────────────────────────────────
     openAdd() {
         Modal.open('➕ Tambah Mahasiswa',
@@ -152,7 +169,9 @@ const MahasiswaView = {
             </div>
             <div class="form-group">
                 <label class="form-label">Kelas</label>
-                <input id="f-kelas" class="form-control" placeholder="Contoh: A">
+                <select id="f-kelas_id" class="form-control">
+                    ${this.getKelasOptionsHTML()}
+                </select>
             </div>`,
             `<button class="btn btn-secondary" onclick="Modal.close()">Batal</button>
              <button class="btn btn-primary" id="btn-save-mhs">Simpan</button>`
@@ -167,11 +186,11 @@ const MahasiswaView = {
         const btn = document.getElementById('btn-save-mhs');
         const nim   = document.getElementById('f-nim').value.trim();
         const nama  = document.getElementById('f-nama').value.trim();
-        const kelas = document.getElementById('f-kelas').value.trim();
+        const kelas_id = document.getElementById('f-kelas_id').value;
         if (!nim || !nama) { Toast.show('NIM dan nama wajib diisi', 'warning'); return; }
 
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.post('mahasiswa.php', { nim, nama, kelas });
+        const res = await API.post('mahasiswa.php', { nim, nama, kelas_id });
         setLoading(btn, false);
 
         if (res.success) {
@@ -198,7 +217,9 @@ const MahasiswaView = {
             </div>
             <div class="form-group">
                 <label class="form-label">Kelas</label>
-                <input id="f-kelas" class="form-control" value="${escHtml(m.kelas || '')}">
+                <select id="f-kelas_id" class="form-control">
+                    ${this.getKelasOptionsHTML(m.kelas_id)}
+                </select>
             </div>`,
             `<button class="btn btn-secondary" onclick="Modal.close()">Batal</button>
              <button class="btn btn-primary" id="btn-save-edit">Simpan Perubahan</button>`
@@ -212,11 +233,11 @@ const MahasiswaView = {
         const btn   = document.getElementById('btn-save-edit');
         const nim   = document.getElementById('f-nim').value.trim();
         const nama  = document.getElementById('f-nama').value.trim();
-        const kelas = document.getElementById('f-kelas').value.trim();
+        const kelas_id = document.getElementById('f-kelas_id').value;
         if (!nim || !nama) { Toast.show('NIM dan nama wajib diisi', 'warning'); return; }
 
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.put(`mahasiswa.php?id=${id}`, { nim, nama, kelas });
+        const res = await API.put(`mahasiswa.php?id=${id}`, { nim, nama, kelas_id });
         setLoading(btn, false);
 
         if (res.success) {
