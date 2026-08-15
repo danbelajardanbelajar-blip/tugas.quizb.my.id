@@ -5,7 +5,6 @@ const KelasView = (() => {
     let _kelas = [];
 
     async function fetchKelas() {
-        showLoader();
         try {
             const res = await API.get('kelas.php?action=list');
             if (res.success) {
@@ -14,14 +13,12 @@ const KelasView = (() => {
             } else {
                 _kelas = [];
                 renderTable();
-                showToast(res.message, 'error');
+                Toast.show(res.message, 'error');
             }
         } catch (e) {
             _kelas = [];
             renderTable();
-            showToast('Gagal memuat data kelas', 'error');
-        } finally {
-            hideLoader();
+            Toast.show('Gagal memuat data kelas', 'error');
         }
     }
 
@@ -73,63 +70,73 @@ const KelasView = (() => {
 
     function showFormModal(id = null) {
         const kelas = id ? _kelas.find(k => k.id === id) : null;
-        const title = id ? 'Edit Kelas' : 'Tambah Kelas';
-        const html = `
-            <div class="modal-header">
-                <h3>${title}</h3>
-                <button class="btn-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="form-kelas" onsubmit="event.preventDefault(); KelasView.saveKelas(${id || 'null'});">
-                    <div class="form-group">
-                        <label>Nama Kelas</label>
-                        <input type="text" id="kelas-nama" class="form-control" value="${kelas ? escHtml(kelas.nama) : ''}" required>
-                    </div>
-                    <div style="text-align:right; margin-top:1rem;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
-                    </div>
-                </form>
+        const title = id ? '✏️ Edit Kelas' : '➕ Tambah Kelas';
+        const bodyHTML = `
+            <div class="form-group">
+                <label class="form-label">Nama Kelas</label>
+                <input type="text" id="kelas-nama" class="form-control" value="${kelas ? escHtml(kelas.nama) : ''}">
             </div>
         `;
-        showModal(html);
-        document.getElementById('kelas-nama').focus();
+        const footerHTML = `
+            <button class="btn btn-secondary" onclick="Modal.close()">Batal</button>
+            <button class="btn btn-primary" id="btn-save-kelas">Simpan</button>
+        `;
+        
+        Modal.open(title, bodyHTML, footerHTML);
+        setTimeout(() => {
+            document.getElementById('btn-save-kelas').addEventListener('click', () => saveKelas(id));
+            document.getElementById('kelas-nama').focus();
+        }, 0);
     }
 
     async function saveKelas(id) {
+        const btn = document.getElementById('btn-save-kelas');
         const nama = document.getElementById('kelas-nama').value.trim();
-        if (!nama) return;
+        if (!nama) {
+            Toast.show('Nama kelas wajib diisi', 'warning');
+            return;
+        }
 
         const action = id ? 'update' : 'create';
         const payload = id ? { id, nama } : { nama };
 
+        setLoading(btn, true, 'Menyimpan…');
         try {
             const res = await API.post('kelas.php?action=' + action, payload);
+            setLoading(btn, false);
             if (res.success) {
-                showToast(res.message, 'success');
-                closeModal();
+                Toast.show(res.message, 'success');
+                Modal.close();
                 fetchKelas();
             } else {
-                showToast(res.message, 'error');
+                Toast.show(res.message, 'error');
             }
         } catch (e) {
-            showToast('Gagal menyimpan kelas', 'error');
+            setLoading(btn, false);
+            Toast.show('Gagal menyimpan kelas', 'error');
         }
     }
 
-    async function deleteKelas(id) {
-        if (!confirm('Yakin ingin menghapus kelas ini?')) return;
-        try {
-            const res = await API.post('kelas.php?action=delete', { id });
-            if (res.success) {
-                showToast(res.message, 'success');
-                fetchKelas();
-            } else {
-                showToast(res.message, 'error');
+    function deleteKelas(id) {
+        const kelas = _kelas.find(k => k.id === id);
+        if (!kelas) return;
+        
+        Modal.confirm(
+            `Hapus kelas <strong>${escHtml(kelas.nama)}</strong>?`,
+            async () => {
+                try {
+                    const res = await API.post('kelas.php?action=delete', { id });
+                    if (res.success) {
+                        Toast.show(res.message, 'success');
+                        fetchKelas();
+                    } else {
+                        Toast.show(res.message, 'error');
+                    }
+                } catch (e) {
+                    Toast.show('Gagal menghapus kelas', 'error');
+                }
             }
-        } catch (e) {
-            showToast('Gagal menghapus kelas', 'error');
-        }
+        );
     }
 
     return { render, showFormModal, saveKelas, deleteKelas };

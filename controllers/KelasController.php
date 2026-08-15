@@ -25,21 +25,25 @@ class KelasController extends BaseController
         // For backwards compatibility with the JS I wrote, I'll keep checking action 
         // if JS was hitting '?action=list', '?action=create', etc.
         
-        switch ($action) {
-            case 'list':
-                $this->listKelas();
-                break;
-            case 'create':
-                $this->createKelas();
-                break;
-            case 'update':
-                $this->updateKelas();
-                break;
-            case 'delete':
-                $this->deleteKelas();
-                break;
-            default:
-                $this->error('Aksi tidak valid');
+        try {
+            switch ($action) {
+                case 'list':
+                    $this->listKelas();
+                    break;
+                case 'create':
+                    $this->createKelas();
+                    break;
+                case 'update':
+                    $this->updateKelas();
+                    break;
+                case 'delete':
+                    $this->deleteKelas();
+                    break;
+                default:
+                    $this->error('Aksi tidak valid');
+            }
+        } catch (Throwable $e) {
+            $this->error($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 500);
         }
     }
 
