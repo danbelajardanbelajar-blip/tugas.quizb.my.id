@@ -12,9 +12,13 @@ const KelasView = (() => {
                 _kelas = res.data || [];
                 renderTable();
             } else {
+                _kelas = [];
+                renderTable();
                 showToast(res.message, 'error');
             }
         } catch (e) {
+            _kelas = [];
+            renderTable();
             showToast('Gagal memuat data kelas', 'error');
         } finally {
             hideLoader();
