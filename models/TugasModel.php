@@ -12,13 +12,14 @@ class TugasModel extends BaseModel
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO tugas (judul, deskripsi, deadline)
-            VALUES (:judul, :deskripsi, :deadline)
+            INSERT INTO tugas (judul, deskripsi, deadline, kelas_id)
+            VALUES (:judul, :deskripsi, :deadline, :kelas_id)
         ");
         $stmt->execute([
             ':judul'     => $data['judul'],
             ':deskripsi' => $data['deskripsi'] ?? null,
             ':deadline'  => $data['deadline']  ?? null,
+            ':kelas_id'  => !empty($data['kelas_id']) ? (int)$data['kelas_id'] : null,
         ]);
         return (int) $this->pdo->lastInsertId();
     }
@@ -26,13 +27,14 @@ class TugasModel extends BaseModel
     public function update(int $id, array $data): bool
     {
         $stmt = $this->pdo->prepare("
-            UPDATE tugas SET judul = :judul, deskripsi = :deskripsi, deadline = :deadline
+            UPDATE tugas SET judul = :judul, deskripsi = :deskripsi, deadline = :deadline, kelas_id = :kelas_id
             WHERE id = :id
         ");
         return $stmt->execute([
             ':judul'     => $data['judul'],
             ':deskripsi' => $data['deskripsi'] ?? null,
             ':deadline'  => $data['deadline']  ?? null,
+            ':kelas_id'  => !empty($data['kelas_id']) ? (int)$data['kelas_id'] : null,
             ':id'        => $id,
         ]);
     }
@@ -42,9 +44,11 @@ class TugasModel extends BaseModel
     {
         return $this->pdo->query("
             SELECT t.*,
+                   k.nama AS kelas_nama,
                    COUNT(DISTINCT tm.id) AS tema_count
             FROM tugas t
             LEFT JOIN tema tm ON tm.tugas_id = t.id
+            LEFT JOIN kelas k ON t.kelas_id = k.id
             GROUP BY t.id
             ORDER BY t.created_at DESC
         ")->fetchAll();

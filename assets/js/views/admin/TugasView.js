@@ -4,6 +4,7 @@
  */
 const TugasView = {
     _tugasList: [],
+    _kelas: [],
     _currentTugas: null,
 
     // ──────────────────────────────────────────────────────────────
@@ -31,6 +32,13 @@ const TugasView = {
                     </div>
                 </div>
             </div>`;
+        
+        // Fetch kelas for dropdowns
+        const resKelas = await API.get('kelas.php?action=list');
+        if (resKelas.success) {
+            this._kelas = resKelas.data || [];
+        }
+
         await this.loadList();
     },
 
@@ -59,7 +67,12 @@ const TugasView = {
                     <div style="font-weight:600">${escHtml(t.judul)}</div>
                     ${t.deskripsi ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escHtml(t.deskripsi).substring(0, 60)}${t.deskripsi.length > 60 ? '…' : ''}</div>` : ''}
                 </td>
-                <td>${deadlineBadge(t.deadline)}</td>
+                <td>
+                    ${t.kelas_nama
+                        ? `<span class="badge badge-primary" style="margin-bottom:4px;display:inline-block">${escHtml(t.kelas_nama)}</span><br>`
+                        : `<span class="badge badge-default" style="margin-bottom:4px;display:inline-block">Semua Kelas</span><br>`}
+                    ${deadlineBadge(t.deadline)}
+                </td>
                 <td><span class="badge badge-info">${t.tema_count} tema</span></td>
                 <td>
                     <div class="td-actions">
@@ -82,7 +95,7 @@ const TugasView = {
                         <tr>
                             <th>#</th>
                             <th>Judul Tugas</th>
-                            <th>Deadline</th>
+                            <th>Kelas & Deadline</th>
                             <th>Tema</th>
                             <th>Aksi</th>
                         </tr>
@@ -90,6 +103,15 @@ const TugasView = {
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
+    },
+
+    getKelasOptionsHTML(selectedId = null) {
+        let html = '<option value="">-- Semua Kelas (Bebas) --</option>';
+        this._kelas.forEach(k => {
+            const selected = (k.id == selectedId) ? 'selected' : '';
+            html += `<option value="${k.id}" ${selected}>${escHtml(k.nama)}</option>`;
+        });
+        return html;
     },
 
     // ──────────────────────────────────────────────────────────────
@@ -288,6 +310,13 @@ const TugasView = {
                 <input id="t-judul" class="form-control" placeholder="Contoh: Tugas 1 — Pengantar">
             </div>
             <div class="form-group">
+                <label class="form-label">Tugaskan ke Kelas</label>
+                <select id="t-kelas_id" class="form-control">
+                    ${this.getKelasOptionsHTML()}
+                </select>
+                <div class="form-hint">Kosongkan jika tugas ini berlaku untuk semua kelas.</div>
+            </div>
+            <div class="form-group">
                 <label class="form-label">Deskripsi</label>
                 <textarea id="t-desk" class="form-control" rows="3"
                           placeholder="Deskripsi singkat tugas…"></textarea>
@@ -308,12 +337,13 @@ const TugasView = {
     async doAddTugas() {
         const btn   = document.getElementById('btn-save-tugas');
         const judul = document.getElementById('t-judul').value.trim();
+        const kelas_id = document.getElementById('t-kelas_id').value;
         const desk  = document.getElementById('t-desk').value.trim();
         const dead  = document.getElementById('t-dead').value;
         if (!judul) { Toast.show('Judul tugas wajib diisi', 'warning'); return; }
 
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.post('tugas.php', { judul, deskripsi: desk, deadline: dead || null });
+        const res = await API.post('tugas.php', { judul, kelas_id, deskripsi: desk, deadline: dead || null });
         setLoading(btn, false);
 
         if (res.success) {
@@ -332,6 +362,13 @@ const TugasView = {
             `<div class="form-group">
                 <label class="form-label">Judul Tugas</label>
                 <input id="t-judul" class="form-control" value="${escHtml(t.judul)}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tugaskan ke Kelas</label>
+                <select id="t-kelas_id" class="form-control">
+                    ${this.getKelasOptionsHTML(t.kelas_id)}
+                </select>
+                <div class="form-hint">Kosongkan jika tugas ini berlaku untuk semua kelas.</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Deskripsi</label>
@@ -353,12 +390,13 @@ const TugasView = {
     async doEditTugas(id) {
         const btn   = document.getElementById('btn-save-edit-tugas');
         const judul = document.getElementById('t-judul').value.trim();
+        const kelas_id = document.getElementById('t-kelas_id').value;
         const desk  = document.getElementById('t-desk').value.trim();
         const dead  = document.getElementById('t-dead').value;
         if (!judul) { Toast.show('Judul tugas wajib diisi', 'warning'); return; }
 
         setLoading(btn, true, 'Menyimpan…');
-        const res = await API.put(`tugas.php?id=${id}`, { judul, deskripsi: desk, deadline: dead || null });
+        const res = await API.put(`tugas.php?id=${id}`, { judul, kelas_id, deskripsi: desk, deadline: dead || null });
         setLoading(btn, false);
 
         if (res.success) {

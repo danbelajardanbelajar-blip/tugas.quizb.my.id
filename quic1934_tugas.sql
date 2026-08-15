@@ -436,6 +436,7 @@ CREATE TABLE `tugas` (
   `judul` varchar(200) NOT NULL,
   `deskripsi` text DEFAULT NULL,
   `deadline` date DEFAULT NULL,
+  `kelas_id` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -511,7 +512,8 @@ ALTER TABLE `tema`
 -- Indexes for table `tugas`
 --
 ALTER TABLE `tugas`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_tugas_kelas` (`kelas_id`);
 
 --
 -- Indexes for table `users`
@@ -574,6 +576,12 @@ ALTER TABLE `users`
 ALTER TABLE `jawaban`
   ADD CONSTRAINT `jawaban_ibfk_1` FOREIGN KEY (`mahasiswa_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `jawaban_ibfk_2` FOREIGN KEY (`soal_id`) REFERENCES `soal` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `tugas`
+--
+ALTER TABLE `tugas`
+  ADD CONSTRAINT `fk_tugas_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `soal`

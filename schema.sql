@@ -46,9 +46,11 @@ CREATE TABLE IF NOT EXISTS `tugas` (
     `judul`      VARCHAR(200) NOT NULL,
     `deskripsi`  TEXT         NULL,
     `deadline`   DATE         NULL,
+    `kelas_id`   INT          NULL COMMENT 'Relasi ke tabel kelas',
     `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fk_tugas_kelas` FOREIGN KEY (`kelas_id`) REFERENCES `kelas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------

@@ -57,7 +57,12 @@ class TugasController extends BaseController
         $this->requireRole('admin');
         $data = $this->getBody();
         if (empty($data['judul'])) $this->error('Judul tugas wajib diisi');
-        $id = $this->tugasModel->create($data);
+        $id = $this->tugasModel->create([
+            'judul' => $data['judul'],
+            'deskripsi' => $data['deskripsi'] ?? null,
+            'deadline' => $data['deadline'] ?? null,
+            'kelas_id' => $data['kelas_id'] ?? null
+        ]);
         $this->success(['id' => $id], 'Tugas berhasil dibuat');
     }
 
@@ -66,7 +71,12 @@ class TugasController extends BaseController
         $this->requireRole('admin');
         if (!$id) $this->error('ID wajib diisi');
         $data = $this->getBody();
-        $this->tugasModel->update($id, $data);
+        $this->tugasModel->update($id, [
+            'judul' => $data['judul'],
+            'deskripsi' => $data['deskripsi'] ?? null,
+            'deadline' => $data['deadline'] ?? null,
+            'kelas_id' => $data['kelas_id'] ?? null
+        ]);
         $this->success(null, 'Tugas berhasil diperbarui');
     }
 
