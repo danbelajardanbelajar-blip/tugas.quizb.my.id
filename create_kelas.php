@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS `kelas` (
 $sqlInsert = "
 INSERT IGNORE INTO `kelas` (`nama`) VALUES
 ('6B'),
-('6C');
+('6C'),
+('PAI-DN-1');
 ";
 
 try {
