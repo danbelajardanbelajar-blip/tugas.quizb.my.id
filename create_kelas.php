@@ -13,9 +13,16 @@ CREATE TABLE IF NOT EXISTS `kelas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ";
 
+$sqlInsert = "
+INSERT IGNORE INTO `kelas` (`nama`) VALUES
+('6B'),
+('6C');
+";
+
 try {
     $pdo->exec($sql);
-    echo "Tabel 'kelas' berhasil dibuat.\n";
+    $pdo->exec($sqlInsert);
+    echo "Tabel 'kelas' berhasil dibuat dan diisi data default.\n";
 } catch (Exception $e) {
     echo "Error membuat tabel 'kelas': " . $e->getMessage() . "\n";
 }
