@@ -54,6 +54,24 @@ class TugasModel extends BaseModel
         ")->fetchAll();
     }
 
+    /** Tugas untuk kelas tertentu (termasuk tugas bebas/NULL) */
+    public function getAllForKelas(?int $kelasId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT t.*,
+                   k.nama AS kelas_nama,
+                   COUNT(DISTINCT tm.id) AS tema_count
+            FROM tugas t
+            LEFT JOIN tema tm ON tm.tugas_id = t.id
+            LEFT JOIN kelas k ON t.kelas_id = k.id
+            WHERE t.kelas_id IS NULL OR t.kelas_id = :kelas_id
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+        ");
+        $stmt->execute([':kelas_id' => $kelasId]);
+        return $stmt->fetchAll();
+    }
+
     /** Satu tugas lengkap dengan tema dan soal (nested) */
     public function getWithTemaAndSoal(int $id): array|false
     {

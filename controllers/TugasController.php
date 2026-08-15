@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/TugasModel.php';
+require_once __DIR__ . '/../models/UserModel.php';
 
 class TugasController extends BaseController
 {
@@ -35,20 +36,58 @@ class TugasController extends BaseController
 
     private function getAll(): never
     {
-        $this->success($this->tugasModel->getAllWithCount());
+        $session = $this->requireAuth();
+        
+        if ($session['role'] === 'mahasiswa') {
+            // Fetch the user's kelas_id
+            $userModel = new UserModel();
+            $user = $userModel->findById($session['user_id']);
+            $kelasId = $user['kelas_id'] ?? null;
+            
+            $this->success($this->tugasModel->getAllForKelas($kelasId));
+        } else {
+            // Admin sees all
+            $this->success($this->tugasModel->getAllWithCount());
+        }
     }
 
     private function getOne(int $id): never
     {
+        $session = $this->requireAuth();
         $tugas = $this->tugasModel->findById($id);
         if (!$tugas) $this->error('Tugas tidak ditemukan', 404);
+        
+        // Cek izin akses jika mahasiswa
+        if ($session['role'] === 'mahasiswa') {
+            $userModel = new UserModel();
+            $user = $userModel->findById($session['user_id']);
+            $kelasId = $user['kelas_id'] ?? null;
+            
+            if ($tugas['kelas_id'] !== null && $tugas['kelas_id'] != $kelasId) {
+                $this->error('Anda tidak memiliki akses ke tugas ini', 403);
+            }
+        }
+        
         $this->success($tugas);
     }
 
     private function getDetail(int $id): never
     {
+        $session = $this->requireAuth();
         $tugas = $this->tugasModel->getWithTemaAndSoal($id);
         if (!$tugas) $this->error('Tugas tidak ditemukan', 404);
+        
+        // Cek izin akses jika mahasiswa
+        if ($session['role'] === 'mahasiswa') {
+            $userModel = new UserModel();
+            $user = $userModel->findById($session['user_id']);
+            $kelasId = $user['kelas_id'] ?? null;
+            
+            if ($tugas['kelas_id'] !== null && $tugas['kelas_id'] != $kelasId) {
+                $this->error('Anda tidak memiliki akses ke tugas ini', 403);
+            }
+        }
+
         $this->success($tugas);
     }
 
