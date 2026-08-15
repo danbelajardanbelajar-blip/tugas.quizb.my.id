@@ -54,6 +54,7 @@
      ========================================================= -->
 <script src="assets/js/views/LoginView.js"></script>
 <script src="assets/js/views/admin/MahasiswaView.js"></script>
+<script src="assets/js/views/admin/KelasView.js"></script>
 <script src="assets/js/views/admin/TugasView.js"></script>
 <script src="assets/js/views/admin/RekapView.js"></script>
 <script src="assets/js/views/mahasiswa/TugasListView.js"></script>

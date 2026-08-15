@@ -59,6 +59,7 @@ const App = (() => {
 
         switch (page) {
             case 'mahasiswa': MahasiswaView.render(); break;
+            case 'kelas':     KelasView.render(); break;
             case 'tugas':
                 if (parts[1]) TugasView.renderDetail(parseInt(parts[1]));
                 else           TugasView.render();
@@ -90,6 +91,7 @@ const App = (() => {
     function renderAdminShell(activePage) {
         const navItems = [
             { key: 'mahasiswa', icon: '👥', label: 'Data Mahasiswa' },
+            { key: 'kelas',     icon: '🏫', label: 'Kelola Kelas'   },
             { key: 'tugas',     icon: '📋', label: 'Data Tugas'     },
             { key: 'rekap',     icon: '📊', label: 'Rekapitulasi'   },
         ];
