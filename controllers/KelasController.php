@@ -12,75 +12,75 @@ class KelasController extends BaseController
 
     public function __construct()
     {
-        parent::__construct();
-        $this->requireAdmin(); // Only admin can manage classes
         $this->kelasModel = new KelasModel();
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $action = $_GET['action'] ?? '';
+        $this->requireRole('admin'); // Only admin can manage classes
 
-        try {
-            switch ($action) {
-                case 'list':
-                    $this->listKelas();
-                    break;
-                case 'create':
-                    $this->createKelas();
-                    break;
-                case 'update':
-                    $this->updateKelas();
-                    break;
-                case 'delete':
-                    $this->deleteKelas();
-                    break;
-                default:
-                    $this->jsonResponse(false, 'Aksi tidak valid');
-            }
-        } catch (Exception $e) {
-            $this->jsonResponse(false, 'Terjadi kesalahan: ' . $e->getMessage());
+        $action = $this->param('action', '');
+        
+        // Either route by 'action' query param or by HTTP method.
+        // For backwards compatibility with the JS I wrote, I'll keep checking action 
+        // if JS was hitting '?action=list', '?action=create', etc.
+        
+        switch ($action) {
+            case 'list':
+                $this->listKelas();
+                break;
+            case 'create':
+                $this->createKelas();
+                break;
+            case 'update':
+                $this->updateKelas();
+                break;
+            case 'delete':
+                $this->deleteKelas();
+                break;
+            default:
+                $this->error('Aksi tidak valid');
         }
     }
 
-    private function listKelas()
+    private function listKelas(): never
     {
         $data = $this->kelasModel->getAllKelas();
-        $this->jsonResponse(true, 'Data kelas', $data);
+        $this->success($data, 'Data kelas');
     }
 
-    private function createKelas()
+    private function createKelas(): never
     {
-        $input = $this->getJsonInput();
+        $input = $this->getBody();
         if (empty($input['nama'])) {
-            $this->jsonResponse(false, 'Nama kelas harus diisi');
+            $this->error('Nama kelas harus diisi');
         }
 
         $this->kelasModel->create($input);
-        $this->jsonResponse(true, 'Kelas berhasil ditambahkan');
+        $this->success(null, 'Kelas berhasil ditambahkan');
     }
 
-    private function updateKelas()
+    private function updateKelas(): never
     {
-        $input = $this->getJsonInput();
+        $input = $this->getBody();
         $id = $input['id'] ?? 0;
         if (empty($id) || empty($input['nama'])) {
-            $this->jsonResponse(false, 'ID dan Nama kelas harus diisi');
+            $this->error('ID dan Nama kelas harus diisi');
         }
 
         $this->kelasModel->update((int)$id, $input);
-        $this->jsonResponse(true, 'Kelas berhasil diperbarui');
+        $this->success(null, 'Kelas berhasil diperbarui');
     }
 
-    private function deleteKelas()
+    private function deleteKelas(): never
     {
-        $input = $this->getJsonInput();
+        $input = $this->getBody();
         $id = $input['id'] ?? 0;
         if (empty($id)) {
-            $this->jsonResponse(false, 'ID harus diisi');
+            $this->error('ID harus diisi');
         }
 
         $this->kelasModel->delete((int)$id);
-        $this->jsonResponse(true, 'Kelas berhasil dihapus');
+        $this->success(null, 'Kelas berhasil dihapus');
     }
 }
