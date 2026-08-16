@@ -44,11 +44,12 @@ class JawabanModel extends BaseModel
     public function getMahasiswaYangMengerjakan(int $temaId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT u.id, u.nama, u.username AS nim, u.kelas,
+            SELECT u.id, u.nama, u.username AS nim, k.nama AS kelas,
                    COUNT(j.id)         AS jumlah_jawaban,
                    MAX(j.updated_at)   AS last_submit
             FROM jawaban j
             JOIN users u ON u.id  = j.mahasiswa_id
+            LEFT JOIN kelas k ON u.kelas_id = k.id
             JOIN soal  s ON s.id  = j.soal_id
             WHERE s.tema_id = ?
             GROUP BY u.id
