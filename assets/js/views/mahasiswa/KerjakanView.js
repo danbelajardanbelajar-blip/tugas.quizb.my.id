@@ -233,23 +233,7 @@ const KerjakanView = {
             if (el) isi = el.value;
         }
         
-        // --- PROTEKSI PASTE DARI SUGGESTION & GBOARD CLIPBOARD ---
-        if (e && el) {
-            // Deteksi jika input lebih dari 2 karakter sekaligus (Paste/Saran/Clipboard)
-            if (e.inputType === 'insertFromPaste' || (e.data && e.data.length > 2)) {
-                e.preventDefault();
-                Toast.show('Penggunaan paste atau saran otomatis (clipboard) diblokir!', 'warning');
-                
-                // Revert ke teks sebelum di-paste
-                const prevVal = el.getAttribute('data-prev-value') || '';
-                el.value = prevVal;
-                isi = prevVal; // Jangan save teks yang di-paste
-            } else {
-                // Jika input normal, simpan nilai saat ini untuk history
-                el.setAttribute('data-prev-value', isi);
-            }
-        }
-        // ---------------------------------------------------------
+        // (HTML onpaste attribute is already handling standard paste blocking)
         
         const ind = document.getElementById(`save-ind-${soalId}`);
         if (!ind) return;
