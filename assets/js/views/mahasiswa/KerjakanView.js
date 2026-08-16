@@ -233,22 +233,19 @@ const KerjakanView = {
             if (el) isi = el.value;
         }
         
-        // --- STRICT ANTI-CHEAT: BLOKIR PASTE & WORD PREDICTION ---
+        // --- ANTI-CHEAT: BLOKIR PASTE & DROP (TANPA GANGGU KETIK CEPAT) ---
         if (e && el) {
+            // Hanya blokir event spesifik paste atau drop dari keyboard/sistem.
+            // Kita TIDAK mengecek panjang karakter (e.data.length) karena Android
+            // sering mengirimkan banyak karakter sekaligus saat mode 'Composition'
+            // atau mengetik cepat, sehingga mengecek length akan merusak fungsi ketik.
             if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
                 e.preventDefault();
                 Toast.show('Fitur Paste diblokir pada ujian ini.', 'warning');
                 el.value = el.getAttribute('data-prev-value') || '';
                 isi = el.value;
-            } else if (e.data && e.data.length > 1) {
-                // Predictive text, Auto-correct, Swipe typing, atau Clipboard keyboard HP
-                // akan mengirim string lebih dari 1 karakter. Kita blokir.
-                e.preventDefault();
-                Toast.show('Word Prediction / Auto-correct diblokir. Harap ketik manual satu per satu huruf.', 'warning');
-                el.value = el.getAttribute('data-prev-value') || '';
-                isi = el.value;
             } else {
-                // Normal typing (1 character) or Backspace (e.data is null)
+                // Ketik normal, cepat, atau swipe typing diizinkan
                 el.setAttribute('data-prev-value', isi);
             }
         }
