@@ -184,16 +184,17 @@ const KerjakanView = {
                             } else {
                                 inputHtml = `
                                     <textarea class="form-control"
-                                              rows="4"
-                                              style="margin-top:12px"
-                                              placeholder="Ketik jawaban Anda di sini…"
-                                              data-soalid="${s.id}"
-                                              data-prev-value="${escHtml(isi)}"
-                                              oninput="KerjakanView.handleInput(${s.id}, null, event)"
-                                              onpaste="event.preventDefault(); Toast.show('Anda tidak diizinkan melakukan paste jawaban.', 'warning'); return false;"
-                                              ondrop="event.preventDefault(); return false;"
-                                              autocomplete="off" autocorrect="off" spellcheck="false"
-                                              ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                          rows="4"
+                                          style="margin-top:12px"
+                                          placeholder="Ketik jawaban Anda di sini…"
+                                          data-soalid="${s.id}"
+                                          data-prev-value="${escHtml(isi)}"
+                                          oninput="KerjakanView.handleInput(${s.id}, null, event)"
+                                          onbeforeinput="if(event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') { event.preventDefault(); Toast.show('Paste/Drop tidak diizinkan.', 'warning'); return false; }"
+                                          onpaste="event.preventDefault(); Toast.show('Paste tidak diizinkan.', 'warning'); return false;"
+                                          ondrop="event.preventDefault(); Toast.show('Drop tidak diizinkan.', 'warning'); return false;"
+                                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                                          ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
                                 `;
                             }
 
@@ -233,19 +234,15 @@ const KerjakanView = {
             if (el) isi = el.value;
         }
         
-        // --- ANTI-CHEAT: BLOKIR PASTE & DROP (TANPA GANGGU KETIK CEPAT) ---
+        // --- ANTI-CHEAT: BLOKIR PASTE & DROP (Fallback) ---
         if (e && el) {
-            // Hanya blokir event spesifik paste atau drop dari keyboard/sistem.
-            // Kita TIDAK mengecek panjang karakter (e.data.length) karena Android
-            // sering mengirimkan banyak karakter sekaligus saat mode 'Composition'
-            // atau mengetik cepat, sehingga mengecek length akan merusak fungsi ketik.
             if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
-                e.preventDefault();
-                Toast.show('Fitur Paste diblokir pada ujian ini.', 'warning');
+                // Should have been caught by onbeforeinput, but just in case
                 el.value = el.getAttribute('data-prev-value') || '';
                 isi = el.value;
+                Toast.show('Input dari clipboard terdeteksi dan dibatalkan.', 'warning');
             } else {
-                // Ketik normal, cepat, atau swipe typing diizinkan
+                // Simpan nilai ketikan manual yang sah
                 el.setAttribute('data-prev-value', isi);
             }
         }
