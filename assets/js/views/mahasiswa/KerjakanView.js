@@ -233,7 +233,26 @@ const KerjakanView = {
             if (el) isi = el.value;
         }
         
-        // (HTML onpaste attribute is already handling standard paste blocking)
+        // --- STRICT ANTI-CHEAT: BLOKIR PASTE & WORD PREDICTION ---
+        if (e && el) {
+            if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+                e.preventDefault();
+                Toast.show('Fitur Paste diblokir pada ujian ini.', 'warning');
+                el.value = el.getAttribute('data-prev-value') || '';
+                isi = el.value;
+            } else if (e.data && e.data.length > 1) {
+                // Predictive text, Auto-correct, Swipe typing, atau Clipboard keyboard HP
+                // akan mengirim string lebih dari 1 karakter. Kita blokir.
+                e.preventDefault();
+                Toast.show('Word Prediction / Auto-correct diblokir. Harap ketik manual satu per satu huruf.', 'warning');
+                el.value = el.getAttribute('data-prev-value') || '';
+                isi = el.value;
+            } else {
+                // Normal typing (1 character) or Backspace (e.data is null)
+                el.setAttribute('data-prev-value', isi);
+            }
+        }
+        // ---------------------------------------------------------
         
         const ind = document.getElementById(`save-ind-${soalId}`);
         if (!ind) return;
