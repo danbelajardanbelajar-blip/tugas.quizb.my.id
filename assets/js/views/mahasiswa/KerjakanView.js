@@ -193,8 +193,8 @@ const KerjakanView = {
                                         ${previewText}
                                         ${gradient}
                                     </div>
-                                    <div id="uraian-editor-container-${s.id}" style="display:none; margin-top:12px; background:var(--bg-input);">
-                                        <div id="quill-soal-${s.id}" style="min-height: 150px; font-size: 14px; background: #fff; color: #333;" data-soalid="${s.id}">${isi}</div>
+                                    <div id="uraian-editor-container-${s.id}" style="display:none; margin-top:12px;">
+                                        <div id="quill-soal-${s.id}" style="min-height: 150px;" data-soalid="${s.id}">${isi}</div>
                                     </div>
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                                         <div style="font-size:11px; color:var(--text-muted);" id="last-edit-${s.id}">${lastEdit}</div>
@@ -239,7 +239,7 @@ const KerjakanView = {
                         <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
-                        <div id="quill-komentar" style="min-height:80px; background:#fff; color:#333; font-size:14px;"></div>
+                        <div id="quill-komentar" style="min-height:80px;"></div>
                         <button class="btn btn-primary" onclick="KerjakanView.kirimKomentar()" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                     </div>
                 </div>

@@ -1190,3 +1190,42 @@ tbody td {
     }
 }
 
+
+ / *    % % %  Q u i l l   E d i t o r   D a r k   T h e m e   O v e r r i d e s    % % % % % % % % % % % % % % % % % % % % % % % % % %  * / 
+ . q l - t o o l b a r . q l - s n o w   { 
+         b a c k g r o u n d :   v a r ( - - b g - s u r f a c e ) ; 
+         b o r d e r :   1 p x   s o l i d   v a r ( - - b o r d e r ) ; 
+         b o r d e r - r a d i u s :   8 p x   8 p x   0   0 ; 
+ } 
+ . q l - c o n t a i n e r . q l - s n o w   { 
+         b a c k g r o u n d :   v a r ( - - b g - i n p u t ) ; 
+         b o r d e r :   1 p x   s o l i d   v a r ( - - b o r d e r ) ; 
+         b o r d e r - t o p :   n o n e ; 
+         b o r d e r - r a d i u s :   0   0   8 p x   8 p x ; 
+         c o l o r :   v a r ( - - t e x t - p r i m a r y ) ; 
+         f o n t - s i z e :   1 4 p x ; 
+         f o n t - f a m i l y :   i n h e r i t ; 
+ } 
+ . q l - s n o w   . q l - s t r o k e   { 
+         s t r o k e :   v a r ( - - t e x t - s e c o n d a r y ) ; 
+ } 
+ . q l - s n o w   . q l - f i l l ,   . q l - s n o w   . q l - s t r o k e . q l - f i l l   { 
+         f i l l :   v a r ( - - t e x t - s e c o n d a r y ) ; 
+ } 
+ . q l - s n o w . q l - t o o l b a r   b u t t o n : h o v e r   . q l - s t r o k e ,   
+ . q l - s n o w   . q l - t o o l b a r   b u t t o n : h o v e r   . q l - s t r o k e , 
+ . q l - s n o w . q l - t o o l b a r   b u t t o n . q l - a c t i v e   . q l - s t r o k e ,   
+ . q l - s n o w   . q l - t o o l b a r   b u t t o n . q l - a c t i v e   . q l - s t r o k e   { 
+         s t r o k e :   v a r ( - - a c c e n t ) ; 
+ } 
+ . q l - s n o w . q l - t o o l b a r   b u t t o n : h o v e r   . q l - f i l l ,   
+ . q l - s n o w   . q l - t o o l b a r   b u t t o n : h o v e r   . q l - f i l l , 
+ . q l - s n o w . q l - t o o l b a r   b u t t o n . q l - a c t i v e   . q l - f i l l ,   
+ . q l - s n o w   . q l - t o o l b a r   b u t t o n . q l - a c t i v e   . q l - f i l l   { 
+         f i l l :   v a r ( - - a c c e n t ) ; 
+ } 
+ . q l - e d i t o r . q l - b l a n k : : b e f o r e   { 
+         c o l o r :   v a r ( - - t e x t - m u t e d ) ; 
+         f o n t - s t y l e :   n o r m a l ; 
+ }  
+ 

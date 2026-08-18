@@ -16,7 +16,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <!-- App CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=2">
     
     <!-- Quill.js for Rich Text Editor -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
@@ -57,12 +57,13 @@
      JAVASCRIPT — VIEWS
      ========================================================= -->
 <script src="assets/js/views/LoginView.js"></script>
+<script src="assets/js/views/admin/DashboardView.js"></script>
 <script src="assets/js/views/admin/MahasiswaView.js?v=4"></script>
 <script src="assets/js/views/admin/KelasView.js?v=5"></script>
 <script src="assets/js/views/admin/TugasView.js?v=2"></script>
-<script src="assets/js/views/admin/RekapView.js?v=5"></script>
+<script src="assets/js/views/admin/RekapView.js?v=6"></script>
 <script src="assets/js/views/mahasiswa/TugasListView.js"></script>
-<script src="assets/js/views/mahasiswa/KerjakanView.js?v=11"></script>
+<script src="assets/js/views/mahasiswa/KerjakanView.js?v=12"></script>
 
 <!-- =========================================================
      JAVASCRIPT — ROUTER / BOOTSTRAP

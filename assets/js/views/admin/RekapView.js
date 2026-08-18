@@ -185,7 +185,7 @@ const RekapView = {
                     <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div id="quill-komentar" style="min-height:80px; background:#fff; color:#333; font-size:14px;"></div>
+                    <div id="quill-komentar" style="min-height:80px;"></div>
                     <button class="btn btn-primary" onclick="RekapView.kirimKomentar(${temaId}, ${mahasiswaId})" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                 </div>
             </div>`
