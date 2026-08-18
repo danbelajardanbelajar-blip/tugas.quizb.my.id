@@ -194,16 +194,7 @@ const RekapView = {
         // Init Komentar Quill
         setTimeout(() => {
             const komentarContainer = document.getElementById('quill-komentar');
-            if (komentarContainer && !this._quillKomentar) {
-                this._quillKomentar = new Quill(komentarContainer, {
-                    theme: 'snow',
-                    modules: {
-                        toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ]
-                    }
-                });
-            } else if (komentarContainer && this._quillKomentar) {
-                // If modal is re-opened, reattach quill? Wait, quill destroys original element.
-                // It's better to just re-create it since Modal.open destroys inner DOM.
+            if (komentarContainer) {
                 this._quillKomentar = new Quill(komentarContainer, {
                     theme: 'snow',
                     modules: {

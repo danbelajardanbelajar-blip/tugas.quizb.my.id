@@ -252,10 +252,11 @@ const KerjakanView = {
     },
 
     initQuill(soals) {
-        if (!this._quillInstances) this._quillInstances = {};
+        // Reset instansi karena DOM digambar ulang setiap kali renderSoal
+        this._quillInstances = {};
 
         soals.forEach(s => {
-            if (s.jenis !== 'uraian') return;
+            if (s.jenis === 'ganda' || s.jenis === 'file') return;
             const container = document.getElementById(`quill-soal-${s.id}`);
             if (container && !this._quillInstances[s.id]) {
                 const quill = new Quill(container, {
@@ -285,7 +286,7 @@ const KerjakanView = {
 
         // Init Komentar
         const komentarContainer = document.getElementById('quill-komentar');
-        if (komentarContainer && !this._quillKomentar) {
+        if (komentarContainer) {
             this._quillKomentar = new Quill(komentarContainer, {
                 theme: 'snow',
                 modules: {
