@@ -299,7 +299,7 @@ const KerjakanView = {
     // ─── Edit Mode Toggler ──────────────────────────────────────────
     toggleEdit(soalId) {
         const preview = document.getElementById(`uraian-preview-${soalId}`);
-        const editor = document.getElementById(`uraian-editor-${soalId}`);
+        const editor = document.getElementById(`uraian-editor-container-${soalId}`);
         const btn = document.getElementById(`btn-edit-${soalId}`);
         
         if (!preview || !editor || !btn) return;
