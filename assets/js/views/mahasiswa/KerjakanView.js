@@ -110,6 +110,7 @@ const KerjakanView = {
         this._activeTemaId = temaId;
         this.renderSidebar();
         this.renderSoal();
+        this.loadKomentar();
     },
 
     renderSoal() {
@@ -218,9 +219,31 @@ const KerjakanView = {
                         }).join('')}
                     </div>
                 </div>
-            </div>`;
+            </div>
+            
+            <div class="card" style="margin-bottom:24px" id="komentar-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">💬 Diskusi & Masukan Guru</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                            Diskusikan tugas ini dengan guru Anda
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="komentar-list" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; margin-bottom:15px; padding-right:5px; padding-bottom:10px;">
+                        <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="komentar-input" class="form-control" placeholder="Tulis komentar balasan..." autocomplete="off" onkeypress="if(event.key === 'Enter') KerjakanView.kirimKomentar()">
+                        <button class="btn btn-primary" onclick="KerjakanView.kirimKomentar()" id="btn-kirim-komentar">Kirim</button>
+                    </div>
+                </div>
+            </div>
+            `;
 
         main.innerHTML = html;
+        this.loadKomentar();
     },
 
     // ─── Auto-save mechanism ─────────────────────────────────────────
@@ -337,6 +360,78 @@ const KerjakanView = {
         } catch (err) {
             ind.innerHTML = `❌ Gagal menyimpan (Koneksi error)`;
             ind.style.color = 'var(--danger)';
+        }
+    },
+
+    // ─── Komentar ───────────────────────────────────────────────────
+    async loadKomentar() {
+        if (!this._activeTemaId) return;
+        
+        const list = document.getElementById('komentar-list');
+        if (!list) return;
+
+        const res = await API.get(`komentar.php?action=list&tema_id=${this._activeTemaId}`);
+        if (!res.success) {
+            list.innerHTML = `<div class="text-center text-danger" style="font-size:12px;">Gagal memuat komentar</div>`;
+            return;
+        }
+
+        const data = res.data || [];
+        if (data.length === 0) {
+            list.innerHTML = `<div class="text-center text-muted" style="font-size:12px;">Belum ada pesan. Anda bisa bertanya atau berdiskusi di sini.</div>`;
+            return;
+        }
+
+        list.innerHTML = data.map(k => {
+            const isMe = k.pengirim_role === 'mahasiswa';
+            const align = isMe ? 'flex-end' : 'flex-start';
+            const bg = isMe ? 'var(--primary)' : 'var(--bg-input)';
+            const color = isMe ? '#fff' : 'var(--text-primary)';
+            const border = isMe ? 'none' : '1px solid var(--border)';
+            const nameColor = isMe ? 'var(--text-muted)' : 'var(--text-muted)';
+            const senderName = isMe ? 'Anda' : 'Guru (Admin)';
+            
+            return `
+            <div style="display:flex; flex-direction:column; align-items:${align}; max-width:85%; align-self:${align};">
+                <div style="font-size:10px; color:${nameColor}; margin-bottom:4px;">
+                    ${senderName} • ${formatDate(k.created_at)}
+                </div>
+                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word;">
+                    ${escHtml(k.isi)}
+                </div>
+            </div>`;
+        }).join('');
+        
+        // Scroll to bottom
+        list.scrollTop = list.scrollHeight;
+    },
+
+    async kirimKomentar() {
+        if (!this._activeTemaId) return;
+
+        const input = document.getElementById('komentar-input');
+        const btn = document.getElementById('btn-kirim-komentar');
+        const isi = input.value.trim();
+        
+        if (!isi) return;
+
+        setLoading(btn, true, 'Kirim');
+        input.disabled = true;
+
+        const res = await API.post('komentar.php?action=send', {
+            tema_id: this._activeTemaId,
+            isi: isi
+        });
+
+        setLoading(btn, false);
+        input.disabled = false;
+
+        if (res.success) {
+            input.value = '';
+            input.focus();
+            this.loadKomentar();
+        } else {
+            Toast.show(res.message, 'error');
         }
     }
 };

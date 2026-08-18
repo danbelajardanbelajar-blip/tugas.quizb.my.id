@@ -174,12 +174,25 @@ const RekapView = {
             `<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">
                 Tema: <strong>${escHtml(this._selectedTema?.nama || '')}</strong>
             </div>
-            <div id="jawaban-detail-wrap">
+            <div id="jawaban-detail-wrap" style="max-height: 40vh; overflow-y: auto; padding-right:10px;">
                 <div class="app-loader" style="height:100px">
                     <div class="loader-ring"></div>
                 </div>
+            </div>
+            <div id="komentar-section" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
+                <div style="font-weight:600; font-size:14px; margin-bottom:12px; color:var(--text-primary)">💬 Ruang Diskusi / Komentar</div>
+                <div id="komentar-list" style="display:flex; flex-direction:column; gap:10px; max-height:200px; overflow-y:auto; margin-bottom:12px; padding-right:5px;">
+                    <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="komentar-input" class="form-control" placeholder="Tulis komentar/masukan..." autocomplete="off" onkeypress="if(event.key === 'Enter') RekapView.kirimKomentar(${temaId}, ${mahasiswaId})">
+                    <button class="btn btn-primary" onclick="RekapView.kirimKomentar(${temaId}, ${mahasiswaId})" id="btn-kirim-komentar">Kirim</button>
+                </div>
             </div>`
         );
+        
+        // Load komentar bersamaan dengan load jawaban
+        this.loadKomentar(temaId, mahasiswaId);
 
         const res = await API.get(`jawaban.php?action=detail-mahasiswa&mahasiswa_id=${mahasiswaId}&tema_id=${temaId}`);
         const wrap = document.getElementById('jawaban-detail-wrap');
@@ -240,4 +253,72 @@ const RekapView = {
             </div>`;
         }).join('');
     },
+
+    // ─── Komentar ───────────────────────────────────────────────────
+    async loadKomentar(temaId, mahasiswaId) {
+        const list = document.getElementById('komentar-list');
+        if (!list) return;
+
+        const res = await API.get(`komentar.php?action=list&tema_id=${temaId}&mahasiswa_id=${mahasiswaId}`);
+        if (!res.success) {
+            list.innerHTML = `<div class="text-center text-danger" style="font-size:12px;">Gagal memuat komentar</div>`;
+            return;
+        }
+
+        const data = res.data || [];
+        if (data.length === 0) {
+            list.innerHTML = `<div class="text-center text-muted" style="font-size:12px;">Belum ada komentar</div>`;
+            return;
+        }
+
+        list.innerHTML = data.map(k => {
+            const isAdmin = k.pengirim_role === 'admin';
+            const align = isAdmin ? 'flex-end' : 'flex-start';
+            const bg = isAdmin ? 'var(--primary)' : 'var(--bg-input)';
+            const color = isAdmin ? '#fff' : 'var(--text-primary)';
+            const border = isAdmin ? 'none' : '1px solid var(--border)';
+            const nameColor = isAdmin ? 'var(--text-muted)' : 'var(--text-muted)';
+            
+            return `
+            <div style="display:flex; flex-direction:column; align-items:${align}; max-width:85%; align-self:${align};">
+                <div style="font-size:10px; color:${nameColor}; margin-bottom:4px;">
+                    ${isAdmin ? 'Guru (Admin)' : escHtml(k.pengirim_nama)} • ${formatDate(k.created_at)}
+                </div>
+                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word;">
+                    ${escHtml(k.isi)}
+                </div>
+            </div>`;
+        }).join('');
+        
+        // Scroll to bottom
+        list.scrollTop = list.scrollHeight;
+    },
+
+    async kirimKomentar(temaId, mahasiswaId) {
+        const input = document.getElementById('komentar-input');
+        const btn = document.getElementById('btn-kirim-komentar');
+        const isi = input.value.trim();
+        
+        if (!isi) return;
+
+        setLoading(btn, true, 'Kirim');
+        input.disabled = true;
+
+        const res = await API.post('komentar.php?action=send', {
+            tema_id: temaId,
+            mahasiswa_id: mahasiswaId,
+            isi: isi
+        });
+
+        setLoading(btn, false);
+        input.disabled = false;
+
+        if (res.success) {
+            input.value = '';
+            input.focus();
+            this.loadKomentar(temaId, mahasiswaId);
+        } else {
+            Toast.show(res.message, 'error');
+        }
+    }
 };
