@@ -31,8 +31,8 @@ const KelasView = (() => {
             </div>
             <div class="page-body">
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <span class="card-title" style="margin:0;">Daftar Kelas</span>
+                    <div class="card-header">
+                        <span class="card-title">Daftar Kelas</span>
                         <button class="btn btn-primary" onclick="KelasView.showFormModal()">➕ Tambah Kelas</button>
                     </div>
                     <div class="table-responsive">
