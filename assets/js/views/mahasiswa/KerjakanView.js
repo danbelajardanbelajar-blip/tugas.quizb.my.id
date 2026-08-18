@@ -184,26 +184,17 @@ const KerjakanView = {
                                 `;
                             } else {
                                 const lastEdit = (ans && ans.updated_at) ? `Terakhir edit: ${formatDate(ans.updated_at)}` : '';
-                                const previewText = isi ? escHtml(isi).substring(0, 150) + (isi.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
-                                const gradient = (isi && isi.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
+                                const plainText = isi ? isi.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+                                const previewText = plainText ? plainText.substring(0, 150) + (plainText.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
+                                const gradient = (plainText && plainText.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
 
                                 inputHtml = `
                                     <div id="uraian-preview-${s.id}" style="margin-top:12px; padding:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; font-size:14px; max-height:80px; overflow:hidden; position:relative;">
                                         ${previewText}
                                         ${gradient}
                                     </div>
-                                    <div id="uraian-editor-${s.id}" style="display:none; margin-top:12px;">
-                                        <textarea class="form-control"
-                                            rows="5"
-                                            placeholder="Ketik jawaban Anda di sini…"
-                                            data-soalid="${s.id}"
-                                            data-prev-value="${escHtml(isi)}"
-                                            oninput="KerjakanView.handleInput(${s.id}, null, event)"
-                                            onbeforeinput="if(event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') { event.preventDefault(); Toast.show('Paste/Drop tidak diizinkan.', 'warning'); return false; }"
-                                            onpaste="event.preventDefault(); Toast.show('Paste tidak diizinkan.', 'warning'); return false;"
-                                            ondrop="event.preventDefault(); Toast.show('Drop tidak diizinkan.', 'warning'); return false;"
-                                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                                            ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                    <div id="uraian-editor-container-${s.id}" style="display:none; margin-top:12px; background:var(--bg-input);">
+                                        <div id="quill-soal-${s.id}" style="min-height: 150px; font-size: 14px; background: #fff; color: #333;" data-soalid="${s.id}">${isi}</div>
                                     </div>
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                                         <div style="font-size:11px; color:var(--text-muted);" id="last-edit-${s.id}">${lastEdit}</div>
@@ -247,8 +238,8 @@ const KerjakanView = {
                     <div id="komentar-list" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; margin-bottom:15px; padding-right:5px; padding-bottom:10px;">
                         <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <textarea id="komentar-input" class="form-control" placeholder="Tulis komentar balasan..." rows="3" style="resize:vertical;" autocomplete="off"></textarea>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div id="quill-komentar" style="min-height:80px; background:#fff; color:#333; font-size:14px;"></div>
                         <button class="btn btn-primary" onclick="KerjakanView.kirimKomentar()" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                     </div>
                 </div>
@@ -257,6 +248,51 @@ const KerjakanView = {
 
         main.innerHTML = html;
         this.loadKomentar();
+        this.initQuill(soals);
+    },
+
+    initQuill(soals) {
+        if (!this._quillInstances) this._quillInstances = {};
+
+        soals.forEach(s => {
+            if (s.jenis !== 'uraian') return;
+            const container = document.getElementById(`quill-soal-${s.id}`);
+            if (container && !this._quillInstances[s.id]) {
+                const quill = new Quill(container, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['clean']
+                        ]
+                    }
+                });
+                
+                // Anti-cheat
+                quill.root.addEventListener('paste', e => { e.preventDefault(); Toast.show('Paste tidak diizinkan.', 'warning'); });
+                quill.root.addEventListener('drop', e => { e.preventDefault(); Toast.show('Drop tidak diizinkan.', 'warning'); });
+
+                quill.on('text-change', (delta, oldDelta, source) => {
+                    if (source === 'user') {
+                        this.handleInput(s.id, quill.root.innerHTML);
+                    }
+                });
+                
+                this._quillInstances[s.id] = quill;
+            }
+        });
+
+        // Init Komentar
+        const komentarContainer = document.getElementById('quill-komentar');
+        if (komentarContainer && !this._quillKomentar) {
+            this._quillKomentar = new Quill(komentarContainer, {
+                theme: 'snow',
+                modules: {
+                    toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ]
+                }
+            });
+        }
     },
 
     // ─── Edit Mode Toggler ──────────────────────────────────────────
@@ -271,16 +307,22 @@ const KerjakanView = {
             preview.style.display = 'none';
             editor.style.display = 'block';
             btn.innerHTML = '❌ Tutup Edit';
-            editor.querySelector('textarea').focus();
+            if (this._quillInstances && this._quillInstances[soalId]) {
+                this._quillInstances[soalId].focus();
+            }
         } else {
             preview.style.display = 'block';
             editor.style.display = 'none';
             btn.innerHTML = '✏️ Edit Jawaban';
             
             // Perbarui teks preview
-            const isi = editor.querySelector('textarea').value;
-            const previewText = isi ? escHtml(isi).substring(0, 150) + (isi.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
-            const gradient = (isi && isi.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
+            let isi = '';
+            if (this._quillInstances && this._quillInstances[soalId]) {
+                isi = this._quillInstances[soalId].root.innerHTML;
+            }
+            const plainText = isi ? isi.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+            const previewText = plainText ? plainText.substring(0, 150) + (plainText.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
+            const gradient = (plainText && plainText.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
             preview.innerHTML = previewText + gradient;
         }
     },
@@ -443,7 +485,7 @@ const KerjakanView = {
                     ${senderName} • ${formatDate(k.created_at)}
                 </div>
                 <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word; white-space:pre-wrap;">
-                    ${escHtml(k.isi)}
+                    ${k.isi}
                 </div>
             </div>`;
         }).join('');
@@ -455,14 +497,16 @@ const KerjakanView = {
     async kirimKomentar() {
         if (!this._activeTemaId) return;
 
-        const input = document.getElementById('komentar-input');
         const btn = document.getElementById('btn-kirim-komentar');
-        const isi = input.value.trim();
-        
-        if (!isi) return;
+        if (!this._quillKomentar) return;
+
+        const plainText = this._quillKomentar.getText().trim();
+        if (!plainText) return;
+
+        const isi = this._quillKomentar.root.innerHTML;
 
         setLoading(btn, true, 'Kirim');
-        input.disabled = true;
+        this._quillKomentar.disable();
 
         const res = await API.post('komentar.php?action=send', {
             tema_id: this._activeTemaId,
@@ -470,11 +514,11 @@ const KerjakanView = {
         });
 
         setLoading(btn, false);
-        input.disabled = false;
+        this._quillKomentar.enable();
 
         if (res.success) {
-            input.value = '';
-            input.focus();
+            this._quillKomentar.root.innerHTML = '';
+            this._quillKomentar.focus();
             this.loadKomentar();
         } else {
             Toast.show(res.message, 'error');

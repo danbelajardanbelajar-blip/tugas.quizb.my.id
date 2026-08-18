@@ -184,12 +184,34 @@ const RekapView = {
                 <div id="komentar-list" style="display:flex; flex-direction:column; gap:10px; max-height:200px; overflow-y:auto; margin-bottom:12px; padding-right:5px;">
                     <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <textarea id="komentar-input" class="form-control" placeholder="Tulis komentar/masukan..." rows="3" style="resize:vertical;" autocomplete="off"></textarea>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div id="quill-komentar" style="min-height:80px; background:#fff; color:#333; font-size:14px;"></div>
                     <button class="btn btn-primary" onclick="RekapView.kirimKomentar(${temaId}, ${mahasiswaId})" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                 </div>
             </div>`
         );
+
+        // Init Komentar Quill
+        setTimeout(() => {
+            const komentarContainer = document.getElementById('quill-komentar');
+            if (komentarContainer && !this._quillKomentar) {
+                this._quillKomentar = new Quill(komentarContainer, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ]
+                    }
+                });
+            } else if (komentarContainer && this._quillKomentar) {
+                // If modal is re-opened, reattach quill? Wait, quill destroys original element.
+                // It's better to just re-create it since Modal.open destroys inner DOM.
+                this._quillKomentar = new Quill(komentarContainer, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ]
+                    }
+                });
+            }
+        }, 50);
         
         // Load komentar bersamaan dengan load jawaban
         this.loadKomentar(temaId, mahasiswaId);
@@ -215,7 +237,7 @@ const RekapView = {
                 const selectedText = (opsiObj && j.isi && opsiObj[j.isi]) ? opsiObj[j.isi] : '';
                 isiHtml = j.isi ? `<strong style="font-size:15px;color:var(--primary)">${escHtml(j.isi)}</strong>. ${escHtml(selectedText)}` : '<em style="color:var(--text-muted)">Belum dijawab</em>';
             } else {
-                isiHtml = j.isi ? escHtml(j.isi) : '<em style="color:var(--text-muted)">Belum diisi</em>';
+                isiHtml = j.isi ? j.isi : '<em style="color:var(--text-muted)">Belum diisi</em>';
             }
 
             const typeBadge = j.jenis === 'ganda' ? '🔘 Ganda' : (j.jenis === 'file' ? '📎 File' : '📝 Uraian');
@@ -285,7 +307,7 @@ const RekapView = {
                     ${isAdmin ? 'Guru (Admin)' : escHtml(k.pengirim_nama)} • ${formatDate(k.created_at)}
                 </div>
                 <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word; white-space:pre-wrap;">
-                    ${escHtml(k.isi)}
+                    ${k.isi}
                 </div>
             </div>`;
         }).join('');
@@ -295,14 +317,16 @@ const RekapView = {
     },
 
     async kirimKomentar(temaId, mahasiswaId) {
-        const input = document.getElementById('komentar-input');
         const btn = document.getElementById('btn-kirim-komentar');
-        const isi = input.value.trim();
-        
-        if (!isi) return;
+        if (!this._quillKomentar) return;
+
+        const plainText = this._quillKomentar.getText().trim();
+        if (!plainText) return;
+
+        const isi = this._quillKomentar.root.innerHTML;
 
         setLoading(btn, true, 'Kirim');
-        input.disabled = true;
+        this._quillKomentar.disable();
 
         const res = await API.post('komentar.php?action=send', {
             tema_id: temaId,
@@ -311,11 +335,11 @@ const RekapView = {
         });
 
         setLoading(btn, false);
-        input.disabled = false;
+        this._quillKomentar.enable();
 
         if (res.success) {
-            input.value = '';
-            input.focus();
+            this._quillKomentar.root.innerHTML = '';
+            this._quillKomentar.focus();
             this.loadKomentar(temaId, mahasiswaId);
         } else {
             Toast.show(res.message, 'error');
