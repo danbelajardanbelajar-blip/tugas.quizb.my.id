@@ -25,24 +25,30 @@ const KelasView = (() => {
     function render() {
         const container = document.getElementById('page-container');
         container.innerHTML = `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h2>Kelola Kelas</h2>
-                    <button class="btn btn-primary" onclick="KelasView.showFormModal()">+ Tambah Kelas</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama Kelas</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-kelas">
-                            <tr><td colspan="3" class="text-center">Memuat...</td></tr>
-                        </tbody>
-                    </table>
+            <div class="page-header">
+                <h1 class="page-title">🏫 Kelola Kelas</h1>
+                <p class="page-subtitle">Manajemen daftar kelas untuk pengelompokan mahasiswa dan penugasan.</p>
+            </div>
+            <div class="page-body">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <span class="card-title" style="margin:0;">Daftar Kelas</span>
+                        <button class="btn btn-primary" onclick="KelasView.showFormModal()">➕ Tambah Kelas</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No</th>
+                                    <th>Nama Kelas</th>
+                                    <th style="width: 150px; text-align:right;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-kelas">
+                                <tr><td colspan="3" class="text-center">Memuat...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         `;
@@ -58,11 +64,13 @@ const KelasView = (() => {
 
         tbody.innerHTML = _kelas.map((k, i) => `
             <tr>
-                <td>${i + 1}</td>
-                <td>${escHtml(k.nama)}</td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="KelasView.showFormModal(${k.id})">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="KelasView.deleteKelas(${k.id})">Hapus</button>
+                <td style="color:var(--text-muted);font-size:12px">${i + 1}</td>
+                <td><strong style="font-size:14px;color:var(--text-primary)">${escHtml(k.nama)}</strong></td>
+                <td style="text-align:right;">
+                    <div class="td-actions" style="justify-content:flex-end">
+                        <button class="btn btn-sm btn-secondary" onclick="KelasView.showFormModal(${k.id})" title="Edit">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="KelasView.deleteKelas(${k.id})" title="Hapus">🗑️ Hapus</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
