@@ -56,9 +56,9 @@
 <script src="assets/js/views/admin/MahasiswaView.js?v=4"></script>
 <script src="assets/js/views/admin/KelasView.js?v=5"></script>
 <script src="assets/js/views/admin/TugasView.js?v=2"></script>
-<script src="assets/js/views/admin/RekapView.js?v=2"></script>
+<script src="assets/js/views/admin/RekapView.js?v=3"></script>
 <script src="assets/js/views/mahasiswa/TugasListView.js"></script>
-<script src="assets/js/views/mahasiswa/KerjakanView.js?v=7"></script>
+<script src="assets/js/views/mahasiswa/KerjakanView.js?v=8"></script>
 
 <!-- =========================================================
      JAVASCRIPT — ROUTER / BOOTSTRAP

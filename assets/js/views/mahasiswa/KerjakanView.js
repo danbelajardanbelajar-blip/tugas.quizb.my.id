@@ -248,8 +248,8 @@ const KerjakanView = {
                         <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <input type="text" id="komentar-input" class="form-control" placeholder="Tulis komentar balasan..." autocomplete="off" onkeypress="if(event.key === 'Enter') KerjakanView.kirimKomentar()">
-                        <button class="btn btn-primary" onclick="KerjakanView.kirimKomentar()" id="btn-kirim-komentar">Kirim</button>
+                        <textarea id="komentar-input" class="form-control" placeholder="Tulis komentar balasan..." rows="3" style="resize:vertical;" autocomplete="off"></textarea>
+                        <button class="btn btn-primary" onclick="KerjakanView.kirimKomentar()" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                     </div>
                 </div>
             </div>
@@ -442,7 +442,7 @@ const KerjakanView = {
                 <div style="font-size:10px; color:${nameColor}; margin-bottom:4px;">
                     ${senderName} • ${formatDate(k.created_at)}
                 </div>
-                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word;">
+                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word; white-space:pre-wrap;">
                     ${escHtml(k.isi)}
                 </div>
             </div>`;

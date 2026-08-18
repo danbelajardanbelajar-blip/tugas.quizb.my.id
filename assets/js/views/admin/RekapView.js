@@ -185,8 +185,8 @@ const RekapView = {
                     <div class="text-center text-muted" style="font-size:12px;">Memuat komentar...</div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="komentar-input" class="form-control" placeholder="Tulis komentar/masukan..." autocomplete="off" onkeypress="if(event.key === 'Enter') RekapView.kirimKomentar(${temaId}, ${mahasiswaId})">
-                    <button class="btn btn-primary" onclick="RekapView.kirimKomentar(${temaId}, ${mahasiswaId})" id="btn-kirim-komentar">Kirim</button>
+                    <textarea id="komentar-input" class="form-control" placeholder="Tulis komentar/masukan..." rows="3" style="resize:vertical;" autocomplete="off"></textarea>
+                    <button class="btn btn-primary" onclick="RekapView.kirimKomentar(${temaId}, ${mahasiswaId})" id="btn-kirim-komentar" style="align-self:flex-end;">Kirim</button>
                 </div>
             </div>`
         );
@@ -284,7 +284,7 @@ const RekapView = {
                 <div style="font-size:10px; color:${nameColor}; margin-bottom:4px;">
                     ${isAdmin ? 'Guru (Admin)' : escHtml(k.pengirim_nama)} • ${formatDate(k.created_at)}
                 </div>
-                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word;">
+                <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; border:${border}; font-size:13px; line-height:1.4; word-break:break-word; white-space:pre-wrap;">
                     ${escHtml(k.isi)}
                 </div>
             </div>`;
