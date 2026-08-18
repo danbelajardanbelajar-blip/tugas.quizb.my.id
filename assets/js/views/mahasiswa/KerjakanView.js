@@ -183,19 +183,32 @@ const KerjakanView = {
                                     </div>
                                 `;
                             } else {
+                                const lastEdit = (ans && ans.updated_at) ? `Terakhir edit: ${formatDate(ans.updated_at)}` : '';
+                                const previewText = isi ? escHtml(isi).substring(0, 150) + (isi.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
+                                const gradient = (isi && isi.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
+
                                 inputHtml = `
-                                    <textarea class="form-control"
-                                          rows="4"
-                                          style="margin-top:12px"
-                                          placeholder="Ketik jawaban Anda di sini…"
-                                          data-soalid="${s.id}"
-                                          data-prev-value="${escHtml(isi)}"
-                                          oninput="KerjakanView.handleInput(${s.id}, null, event)"
-                                          onbeforeinput="if(event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') { event.preventDefault(); Toast.show('Paste/Drop tidak diizinkan.', 'warning'); return false; }"
-                                          onpaste="event.preventDefault(); Toast.show('Paste tidak diizinkan.', 'warning'); return false;"
-                                          ondrop="event.preventDefault(); Toast.show('Drop tidak diizinkan.', 'warning'); return false;"
-                                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                                          ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                    <div id="uraian-preview-${s.id}" style="margin-top:12px; padding:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; font-size:14px; max-height:80px; overflow:hidden; position:relative;">
+                                        ${previewText}
+                                        ${gradient}
+                                    </div>
+                                    <div id="uraian-editor-${s.id}" style="display:none; margin-top:12px;">
+                                        <textarea class="form-control"
+                                            rows="5"
+                                            placeholder="Ketik jawaban Anda di sini…"
+                                            data-soalid="${s.id}"
+                                            data-prev-value="${escHtml(isi)}"
+                                            oninput="KerjakanView.handleInput(${s.id}, null, event)"
+                                            onbeforeinput="if(event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') { event.preventDefault(); Toast.show('Paste/Drop tidak diizinkan.', 'warning'); return false; }"
+                                            onpaste="event.preventDefault(); Toast.show('Paste tidak diizinkan.', 'warning'); return false;"
+                                            ondrop="event.preventDefault(); Toast.show('Drop tidak diizinkan.', 'warning'); return false;"
+                                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                                            ${isPastDeadline ? 'disabled' : ''}>${escHtml(isi)}</textarea>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                                        <div style="font-size:11px; color:var(--text-muted);" id="last-edit-${s.id}">${lastEdit}</div>
+                                        ${!isPastDeadline ? `<button class="btn btn-sm btn-secondary" onclick="KerjakanView.toggleEdit(${s.id})" id="btn-edit-${s.id}">✏️ Edit Jawaban</button>` : ''}
+                                    </div>
                                 `;
                             }
 
@@ -244,6 +257,32 @@ const KerjakanView = {
 
         main.innerHTML = html;
         this.loadKomentar();
+    },
+
+    // ─── Edit Mode Toggler ──────────────────────────────────────────
+    toggleEdit(soalId) {
+        const preview = document.getElementById(`uraian-preview-${soalId}`);
+        const editor = document.getElementById(`uraian-editor-${soalId}`);
+        const btn = document.getElementById(`btn-edit-${soalId}`);
+        
+        if (!preview || !editor || !btn) return;
+
+        if (editor.style.display === 'none') {
+            preview.style.display = 'none';
+            editor.style.display = 'block';
+            btn.innerHTML = '❌ Tutup Edit';
+            editor.querySelector('textarea').focus();
+        } else {
+            preview.style.display = 'block';
+            editor.style.display = 'none';
+            btn.innerHTML = '✏️ Edit Jawaban';
+            
+            // Perbarui teks preview
+            const isi = editor.querySelector('textarea').value;
+            const previewText = isi ? escHtml(isi).substring(0, 150) + (isi.length > 150 ? '...' : '') : '<em class="text-muted">Belum dijawab</em>';
+            const gradient = (isi && isi.length > 150) ? `<div style="position:absolute; bottom:0; left:0; right:0; height:25px; background:linear-gradient(transparent, var(--bg-input));"></div>` : '';
+            preview.innerHTML = previewText + gradient;
+        }
     },
 
     // ─── Auto-save mechanism ─────────────────────────────────────────
@@ -312,7 +351,6 @@ const KerjakanView = {
                 
                 setTimeout(() => {
                     ind.classList.remove('visible');
-                    // Reload the answers to get the new file URL
                     this.reloadAnswers();
                 }, 2000);
             } else {
@@ -341,11 +379,19 @@ const KerjakanView = {
             if (res.success) {
                 // Update local data array
                 const ex = this._jawaban.find(x => x.soal_id == soalId);
-                if (ex) ex.isi = isi;
-                else this._jawaban.push({ soal_id: soalId, isi });
+                const nowStr = new Date().toISOString(); // local approximation
+                if (ex) {
+                    ex.isi = isi;
+                    ex.updated_at = nowStr; 
+                }
+                else this._jawaban.push({ soal_id: soalId, isi, updated_at: nowStr });
 
                 ind.innerHTML = `✅ Tersimpan`;
                 ind.style.color = 'var(--success)';
+                
+                // Update timestamp UI
+                const lastEditEl = document.getElementById(`last-edit-${soalId}`);
+                if (lastEditEl) lastEditEl.innerHTML = `Terakhir edit: Baru saja`;
                 
                 // Update sidebar completion dots
                 this.renderSidebar();
